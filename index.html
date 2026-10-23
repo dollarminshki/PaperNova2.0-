@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PaperNova — Privacy-first PDF tools</title>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+    color: #e2e8f0;
+    min-height: 100vh;
+  }
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 32px; border-bottom: 1px solid #1e293b;
+  }
+  .logo { font-size: 22px; font-weight: 800; }
+  .logo span { color: #818cf8; }
+  .tagline { color: #64748b; font-size: 13px; }
+
+  main { max-width: 960px; margin: 0 auto; padding: 48px 24px; }
+
+  /* ---- Landing view ---- */
+  #landing h1 {
+    font-size: 44px; font-weight: 800; text-align: center; letter-spacing: -1px;
+  }
+  #landing h1 span { color: #818cf8; }
+  #landing p.sub {
+    text-align: center; color: #94a3b8; margin-top: 12px; font-size: 16px;
+  }
+  .grid {
+    display: grid; gap: 16px; margin-top: 40px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+  .card {
+    background: #0f172a; border: 1px solid #1e293b; border-radius: 16px;
+    padding: 24px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .card:hover { border-color: #6366f1; background: #1e293b; transform: translateY(-2px); }
+  .card .icon { font-size: 28px; }
+  .card h3 { margin-top: 10px; font-size: 17px; font-weight: 600; }
+  .card p { margin-top: 4px; font-size: 13px; color: #94a3b8; }
+
+  /* ---- Tool view ---- */
+  #tool { display: none; }
+  .back-btn {
+    background: none; border: 1px solid #334155; color: #cbd5e1;
+    padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px;
+    margin-bottom: 24px;
+  }
+  .back-btn:hover { background: #1e293b; }
+  .tool-title { font-size: 30px; font-weight: 700; }
+  .tool-desc { color: #94a3b8; margin-top: 6px; }
+
+  .field { margin-top: 24px; }
+  .field label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 8px; }
+
+  input[type="file"] {
+    width: 100%; padding: 14px; background: #0f172a;
+    border: 1px dashed #334155; border-radius: 10px; color: #cbd5e1;
+    cursor: pointer;
+  }
+  input[type="file"]::file-selector-button {
+    background: #4f46e5; color: white; border: 0; padding: 8px 14px;
+    border-radius: 6px; cursor: pointer; margin-right: 12px; font-weight: 600;
+  }
+  input[type="text"], input[type="range"] {
+    width: 100%; padding: 10px 14px; background: #0f172a;
+    border: 1px solid #334155; border-radius: 10px; color: #e2e8f0; font-size: 14px;
+  }
+  input[type="range"] { padding: 0; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .angle-btn {
+    padding: 10px 20px; background: #0f172a; border: 1px solid #334155;
+    color: #cbd5e1; border-radius: 10px; cursor: pointer; font-weight: 600;
+  }
+  .angle-btn.active { background: #4f46e5; border-color: #6366f1; color: white; }
+
+  .action {
+    margin-top: 32px; padding: 14px 28px; background: #4f46e5; color: white;
+    border: 0; border-radius: 10px; font-size: 16px; font-weight: 600;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .action:hover { background: #6366f1; }
+  .action:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .file-list { margin-top: 12px; font-size: 13px; color: #94a3b8; }
+  .file-list li { list-style: none; padding: 4px 0; }
+
+  .footer {
+    text-align: center; color: #475569; font-size: 12px;
+    padding: 32px 0; border-top: 1px solid #1e293b; margin-top: 64px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Paper<span>Nova</span></div>
+  <div class="tagline">Privacy-first PDF tools</div>
+</header>
+
+<main>
+  <!-- ================= LANDING ================= -->
+  <section id="landing">
+    <h1>Every PDF tool. <span>One place.</span></h1>
+    <p class="sub">Your files never leave your device.</p>
+
+    <div class="grid" id="toolGrid"></div>
+  </section>
+
+  <!-- ================= TOOL VIEW ================= -->
+  <section id="tool">
+    <button class="back-btn" onclick="showLanding()">← Back</button>
+    <h2 class="tool-title" id="toolTitle"></h2>
+    <p class="tool-desc" id="toolDesc"></p>
+    <div id="toolBody"></div>
+  </section>
+</main>
+
+<footer class="footer">© <span id="year"></span> PaperNova · MIT License</footer>
+
+<script>
+/* ============================================================
+   PaperNova — single-file PDF toolkit
+   Uses pdf-lib (loaded from CDN above) for all manipulation.
+   Everything runs client-side; no files are uploaded anywhere.
+   ============================================================ */
+
+const { PDFDocument, StandardFonts, rgb, degrees } = PDFLib;
+document.getElementById("year").textContent = new Date().getFullYear();
+
+/* ---------- Helpers ---------- */
+
+function downloadBytes(bytes, filename) {
+  const blob = new Blob([bytes], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") node.className = v;
+    else if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
+    else node.setAttribute(k, v);
+  }
+  for (const c of children) {
+    if (typeof c === "string") node.appendChild(document.createTextNode(c));
+    else if (c) node.appendChild(c);
+  }
+  return node;
+}
+
+/* ---------- Tool registry ---------- */
+
+const TOOLS = {
+  merge: {
+    icon: "🔗",
+    title: "Merge PDF",
+    desc: "Combine multiple PDFs into one file.",
+    render: renderMerge,
+  },
+  split: {
+    icon: "✂️",
+    title: "Split PDF",
+    desc: "Extract page ranges into separate files.",
+    render: renderSplit,
+  },
+  rotate: {
+    icon: "🔄",
+    title: "Rotate PDF",
+    desc: "Rotate every page by a fixed angle.",
+    render: renderRotate,
+  },
+  watermark: {
+    icon: "💧",
+    title: "Watermark PDF",
+    desc: "Stamp diagonal text across every page.",
+    render: renderWatermark,
+  },
+  jpgToPdf: {
+    icon: "🖼️",
+    title: "JPG / PNG to PDF",
+    desc: "Turn images into a multi-page PDF.",
+    render: renderJpgToPdf,
+  },
+};
+
+/* ---------- Landing ---------- */
+
+function showLanding() {
+  document.getElementById("landing").style.display = "block";
+  document.getElementById("tool").style.display = "none";
+}
+
+function showTool(key) {
+  const t = TOOLS[key];
+  document.getElementById("landing").style.display = "none";
+  document.getElementById("tool").style.display = "block";
+  document.getElementById("toolTitle").textContent = t.title;
+  document.getElementById("toolDesc").textContent = t.desc;
+  const body = document.getElementById("toolBody");
+  body.innerHTML = "";
+  t.render(body);
+}
+
+(function buildLanding() {
+  const grid = document.getElementById("toolGrid");
+  for (const [key, t] of Object.entries(TOOLS)) {
+    const card = el("div", { class: "card", onclick: () => showTool(key) },
+      el("div", { class: "icon" }, t.icon),
+      el("h3", {}, t.title),
+      el("p", {}, t.desc)
+    );
+    grid.appendChild(card);
+  }
+})();
+
+/* ---------- Tool UIs ---------- */
+
+function renderMerge(root) {
+  let files = [];
+  const list = el("ul", { class: "file-list" });
+  const input = el("input", {
+    type: "file",
+    accept: "application/pdf",
+    multiple: "true",
+    onchange: (e) => {
+      files = Array.from(e.target.files);
+      list.innerHTML = "";
+      files.forEach((f) => list.appendChild(el("li", {}, "• " + f.name)));
+    },
+  });
+  const btn = el("button", { class: "action" }, "Merge PDFs");
+  btn.onclick = async () => {
+    if (files.length < 2) return alert("Select at least 2 PDFs.");
+    btn.disabled = true; btn.textContent = "Merging…";
+    try {
+      const out = await PDFDocument.create();
+      for (const f of files) {
+        const src = await PDFDocument.load(await f.arrayBuffer());
+        const pages = await out.copyPages(src, src.getPageIndices());
+        pages.forEach((p) => out.addPage(p));
+      }
+      downloadBytes(await out.save(), "papernova-merged.pdf");
+    } catch (err) {
+      alert("Merge failed: " + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = "Merge PDFs";
+    }
+  };
+  root.append(
+    el("div", { class: "field" }, input),
+    list,
+    btn
+  );
+}
+
+function renderSplit(root) {
+  let file = null;
+  const fileInput = el("input", {
+    type: "file",
+    accept: "application/pdf",
+    onchange: (e) => { file = e.target.files[0]; },
+  });
+  const rangeInput = el("input", { type: "text", value: "1-2, 3-5" });
+  const btn = el("button", { class: "action" }, "Split PDF");
+  btn.onclick = async () => {
+    if (!file) return alert("Select a PDF first.");
+    btn.disabled = true; btn.textContent = "Splitting…";
+    try {
+      const src = await PDFDocument.load(await file.arrayBuffer());
+      const total = src.getPageCount();
+      const ranges = rangeInput.value
+        .split(",").map((s) => s.trim()).filter(Boolean)
+        .map((s) => {
+          const [a, b] = s.split("-");
+          const start = parseInt(a, 10);
+          const end = b ? parseInt(b, 10) : start;
+          if (isNaN(start) || isNaN(end) || start < 1 || end < start) {
+            throw new Error("Invalid range: " + s);
+          }
+          return { start, end };
+        });
+
+      for (let i = 0; i < ranges.length; i++) {
+        const { start, end } = ranges[i];
+        if (end > total) throw new Error(`Range ${start}-${end} exceeds ${total} pages`);
+        const out = await PDFDocument.create();
+        const idx = [];
+        for (let k = start - 1; k < end; k++) idx.push(k);
+        const pages = await out.copyPages(src, idx);
+        pages.forEach((p) => out.addPage(p));
+        downloadBytes(await out.save(), `papernova-part-${i + 1}.pdf`);
+      }
+    } catch (err) {
+      alert("Split failed: " + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = "Split PDF";
+    }
+  };
+  root.append(
+    el("div", { class: "field" }, fileInput),
+    el("div", { class: "field" },
+      el("label", {}, "Ranges (e.g. 1-2, 3-5)"),
+      rangeInput
+    ),
+    btn
+  );
+}
+
+function renderRotate(root) {
+  let file = null;
+  let angle = 90;
+  const fileInput = el("input", {
+    type: "file",
+    accept: "application/pdf",
+    onchange: (e) => { file = e.target.files[0]; },
+  });
+  const row = el("div", { class: "btn-row" });
+  const buttons = [90, 180, 270].map((a) => {
+    const b = el("button", { class: "angle-btn" + (a === 90 ? " active" : "") }, a + "°");
+    b.onclick = () => {
+      angle = a;
+      buttons.forEach((x) => x.classList.remove("active"));
+      b.classList.add("active");
+    };
+    row.appendChild(b);
+    return b;
+  });
+  const btn = el("button", { class: "action" }, "Rotate PDF");
+  btn.onclick = async () => {
+    if (!file) return alert("Select a PDF first.");
+    btn.disabled = true; btn.textContent = "Rotating…";
+    try {
+      const doc = await PDFDocument.load(await file.arrayBuffer());
+      doc.getPages().forEach((p) => p.setRotation(degrees(angle)));
+      downloadBytes(await doc.save(), "papernova-rotated.pdf");
+    } catch (err) {
+      alert("Rotate failed: " + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = "Rotate PDF";
+    }
+  };
+  root.append(
+    el("div", { class: "field" }, fileInput),
+    el("div", { class: "field" }, el("label", {}, "Angle"), row),
+    btn
+  );
+}
+
+function renderWatermark(root) {
+  let file = null;
+  const fileInput = el("input", {
+    type: "file",
+    accept: "application/pdf",
+    onchange: (e) => { file = e.target.files[0]; },
+  });
+  const textInput = el("input", { type: "text", value: "PaperNova" });
+  const opacityInput = el("input", {
+    type: "range", min: 5, max: 100, step: 5, value: 35,
+  });
+  const opacityLabel = el("label", {}, "Opacity: 35%");
+  opacityInput.oninput = () => {
+    opacityLabel.textContent = "Opacity: " + opacityInput.value + "%";
+  };
+  const btn = el("button", { class: "action" }, "Watermark PDF");
+  btn.onclick = async () => {
+    if (!file) return alert("Select a PDF first.");
+    btn.disabled = true; btn.textContent = "Stamping…";
+    try {
+      const doc = await PDFDocument.load(await file.arrayBuffer());
+      const font = await doc.embedFont(StandardFonts.HelveticaBold);
+      const text = textInput.value || "PaperNova";
+      const opacity = parseInt(opacityInput.value, 10) / 100;
+      doc.getPages().forEach((page) => {
+        const { width, height } = page.getSize();
+        const size = Math.min(width, height) / 8;
+        const tw = font.widthOfTextAtSize(text, size);
+        page.drawText(text, {
+          x: (width - tw) / 2,
+          y: height / 2 - size / 2,
+          size,
+          font,
+          color: rgb(0.4, 0.4, 0.4),
+          opacity,
+          rotate: degrees(45),
+        });
+      });
+      downloadBytes(await doc.save(), "papernova-watermarked.pdf");
+    } catch (err) {
+      alert("Watermark failed: " + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = "Watermark PDF";
+    }
+  };
+  root.append(
+    el("div", { class: "field" }, fileInput),
+    el("div", { class: "field" }, el("label", {}, "Watermark text"), textInput),
+    el("div", { class: "field" }, opacityLabel, opacityInput),
+    btn
+  );
+}
+
+function renderJpgToPdf(root) {
+  let files = [];
+  const list = el("ul", { class: "file-list" });
+  const input = el("input", {
+    type: "file",
+    accept: "image/jpeg,image/png",
+    multiple: "true",
+    onchange: (e) => {
+      files = Array.from(e.target.files);
+      list.innerHTML = "";
+      files.forEach((f) => list.appendChild(el("li", {}, "• " + f.name)));
+    },
+  });
+  const btn = el("button", { class: "action" }, "Create PDF");
+  btn.onclick = async () => {
+    if (files.length === 0) return alert("Select at least one image.");
+    btn.disabled = true; btn.textContent = "Converting…";
+    try {
+      const doc = await PDFDocument.create();
+      for (const f of files) {
+        const bytes = await f.arrayBuffer();
+        const isPng = f.type.includes("png");
+        const img = isPng ? await doc.embedPng(bytes) : await doc.embedJpg(bytes);
+        const page = doc.addPage([img.width, img.height]);
+        page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+      }
+      downloadBytes(await doc.save(), "papernova-images.pdf");
+    } catch (err) {
+      alert("Conversion failed: " + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = "Create PDF";
+    }
+  };
+  root.append(
+    el("div", { class: "field" }, input),
+    list,
+    btn
+  );
+}
+</script>
+</body>
+</html>
