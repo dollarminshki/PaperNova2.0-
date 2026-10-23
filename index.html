@@ -35,29 +35,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Client-Side Power Libraries -->
-    <!-- PDF-Lib -->
+    <!-- Client-Side Libraries -->
+    <!-- PDF-Lib for creating/modifying PDFs -->
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <!-- PDF.js -->
+    <!-- PDF.js for rendering PDFs to Canvas/Images -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <!-- Tesseract OCR -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <!-- docx.js for exporting Word files -->
     <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
-    <!-- JSZip for batch downloads -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <!-- Mammoth.js for Word (DOCX) reading -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 
     <style>
-        .page-thumb-canvas {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: all 0.2s ease;
-        }
-        .page-thumb-canvas:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
-        }
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -96,6 +84,7 @@
                     <button onclick="openTool('merge')" class="hover:text-brand-600 transition">Merge PDF</button>
                     <button onclick="openTool('split')" class="hover:text-brand-600 transition">Split PDF</button>
                     <button onclick="openTool('pdf2word')" class="hover:text-brand-600 transition">PDF to Word</button>
+                    <button onclick="openTool('pdf2jpg')" class="hover:text-brand-600 transition">PDF to JPG</button>
                     <button onclick="openTool('sign')" class="hover:text-brand-600 transition text-brand-600 font-bold flex items-center gap-1"><i class="fa-solid fa-file-signature"></i> Sign PDF</button>
                     <button onclick="openTool('ocr')" class="hover:text-brand-600 transition font-bold text-amber-500 flex items-center gap-1"><i class="fa-solid fa-eye"></i> OCR AI</button>
                     <button onclick="openTool('compress')" class="hover:text-brand-600 transition">Compress</button>
@@ -152,7 +141,7 @@
                 </div>
             </div>
 
-            <!-- Grid of Tools (Full iLovePDF set) -->
+            <!-- Grid of Tools -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="toolsGrid">
                 
                 <!-- Merge PDF -->
@@ -207,97 +196,7 @@
                             <i class="fa-solid fa-file-word"></i>
                         </div>
                         <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">PDF to Word</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Easily convert your PDF files into easy to edit DOC and DOCX documents.</p>
-                    </div>
-                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
-                        <span>LAUNCH TOOL</span>
-                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
-                    </div>
-                </div>
-
-                <!-- PDF to PowerPoint -->
-                <div data-category="convert" onclick="openTool('pdf2ppt')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
-                    <div>
-                        <div class="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-950/50 text-orange-500 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-file-powerpoint"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">PDF to PowerPoint</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Turn your PDF files into easy to edit PPT and PPTX slideshows.</p>
-                    </div>
-                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
-                        <span>LAUNCH TOOL</span>
-                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
-                    </div>
-                </div>
-
-                <!-- PDF to Excel -->
-                <div data-category="convert" onclick="openTool('pdf2excel')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
-                    <div>
-                        <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-file-excel"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">PDF to Excel</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Pull data straight from PDFs into Excel spreadsheets in a few short seconds.</p>
-                    </div>
-                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
-                        <span>LAUNCH TOOL</span>
-                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
-                    </div>
-                </div>
-
-                <!-- Word to PDF -->
-                <div data-category="convert" onclick="openTool('word2pdf')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
-                    <div>
-                        <div class="w-12 h-12 rounded-xl bg-sky-100 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-file-export"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Word to PDF</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Make DOC and DOCX files easy to read by converting them to PDF.</p>
-                    </div>
-                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
-                        <span>LAUNCH TOOL</span>
-                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
-                    </div>
-                </div>
-
-                <!-- PowerPoint to PDF -->
-                <div data-category="convert" onclick="openTool('ppt2pdf')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
-                    <div>
-                        <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-file-powerpoint"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">PowerPoint to PDF</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Make PPT and PPTX slideshows easy to view by converting them to PDF.</p>
-                    </div>
-                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
-                        <span>LAUNCH TOOL</span>
-                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
-                    </div>
-                </div>
-
-                <!-- Excel to PDF -->
-                <div data-category="convert" onclick="openTool('excel2pdf')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
-                    <div>
-                        <div class="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-950/50 text-green-600 dark:text-green-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-file-excel"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Excel to PDF</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Make EXCEL spreadsheets easy to read by converting them to PDF.</p>
-                    </div>
-                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
-                        <span>LAUNCH TOOL</span>
-                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
-                    </div>
-                </div>
-
-                <!-- Edit PDF -->
-                <div data-category="edit" onclick="openTool('edit')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
-                    <div>
-                        <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Edit PDF</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Add text, images, shapes or freehand annotations to a PDF document.</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Easily convert your PDF files into easy to edit DOCX documents.</p>
                     </div>
                     <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
                         <span>LAUNCH TOOL</span>
@@ -312,7 +211,7 @@
                             <i class="fa-solid fa-image"></i>
                         </div>
                         <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">PDF to JPG</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Convert each PDF page into a JPG or extract all images contained in a PDF.</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Convert each PDF page into high-resolution JPG images.</p>
                     </div>
                     <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
                         <span>LAUNCH TOOL</span>
@@ -327,7 +226,7 @@
                             <i class="fa-solid fa-file-image"></i>
                         </div>
                         <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">JPG to PDF</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Convert JPG images to PDF in seconds. Easily adjust orientation and margins.</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Convert JPG or PNG images to PDF in seconds with automatic page sizing.</p>
                     </div>
                     <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
                         <span>LAUNCH TOOL</span>
@@ -342,7 +241,7 @@
                             <i class="fa-solid fa-signature"></i>
                         </div>
                         <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Sign PDF</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Sign yourself or request electronic signatures from others into PDF files.</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Draw and embed an electronic signature onto your PDF documents.</p>
                     </div>
                     <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
                         <span>LAUNCH TOOL</span>
@@ -357,7 +256,7 @@
                             <i class="fa-solid fa-stamp"></i>
                         </div>
                         <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Watermark</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Stamp an image or text over your PDF in seconds. Choose position, typography & transparency.</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Stamp text over your PDF with custom placement and rotation.</p>
                     </div>
                     <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
                         <span>LAUNCH TOOL</span>
@@ -372,7 +271,7 @@
                             <i class="fa-solid fa-rotate-right"></i>
                         </div>
                         <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Rotate PDF</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Rotate your PDFs the way you need them. You can even rotate multiple PDFs at once!</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Rotate your PDF pages by 90, 180, or 270 degrees easily.</p>
                     </div>
                     <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
                         <span>LAUNCH TOOL</span>
@@ -380,77 +279,17 @@
                     </div>
                 </div>
 
-                <!-- HTML to PDF -->
-                <div data-category="convert" onclick="openTool('html2pdf')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
-                    <div>
-                        <div class="w-12 h-12 rounded-xl bg-cyan-100 dark:bg-cyan-950/50 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-code"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">HTML to PDF</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Convert web pages or raw HTML snippets in HTML into clean PDF documents.</p>
-                    </div>
-                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
-                        <span>LAUNCH TOOL</span>
-                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
-                    </div>
-                </div>
-
-                <!-- Unlock PDF -->
-                <div data-category="security" onclick="openTool('unlock')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
-                    <div>
-                        <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-unlock"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Unlock PDF</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Remove PDF password security, giving you the freedom to use your PDFs as you want.</p>
-                    </div>
-                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
-                        <span>LAUNCH TOOL</span>
-                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
-                    </div>
-                </div>
-
-                <!-- Protect PDF -->
-                <div data-category="security" onclick="openTool('protect')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
-                    <div>
-                        <div class="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-lock"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Protect PDF</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Protect PDF files with passwords. Encrypt PDF documents to prevent unauthorized access.</p>
-                    </div>
-                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
-                        <span>LAUNCH TOOL</span>
-                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
-                    </div>
-                </div>
-
-                <!-- Organize PDF -->
-                <div data-category="organize" onclick="openTool('organize')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
-                    <div>
-                        <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-layer-group"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Organize PDF</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Sort pages of your PDF file however you like. Delete PDF pages or add PDF pages.</p>
-                    </div>
-                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
-                        <span>LAUNCH TOOL</span>
-                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
-                    </div>
-                </div>
-
-                <!-- OCR / Scan to PDF -->
-                <div data-category="intelligence intelligence workflows" onclick="openTool('ocr')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-amber-500/40 hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
+                <!-- OCR AI -->
+                <div data-category="intelligence workflows" onclick="openTool('ocr')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-amber-500/40 hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
                     <div>
                         <div class="w-12 h-12 rounded-xl bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
                             <i class="fa-solid fa-eye"></i>
                         </div>
                         <div class="flex items-center gap-2 mb-2">
-                            <h3 class="text-xl font-bold group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Scan to PDF / OCR</h3>
+                            <h3 class="text-xl font-bold group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Scan to Text / OCR</h3>
                             <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-500 text-slate-900">AI</span>
                         </div>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Convert non-selectable scanned documents into searchable, selectable text PDFs.</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Extract text directly from scanned images and PDFs using optical character recognition.</p>
                     </div>
                     <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
                         <span>LAUNCH TOOL</span>
@@ -465,7 +304,7 @@
                             <i class="fa-solid fa-list-ol"></i>
                         </div>
                         <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Page Numbers</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Add page numbers into PDFs easily. Choose position, dimensions, typography.</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Add formatted page numbers at the bottom of each page.</p>
                     </div>
                     <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
                         <span>LAUNCH TOOL</span>
@@ -473,29 +312,14 @@
                     </div>
                 </div>
 
-                <!-- Compare PDF -->
-                <div data-category="intelligence" onclick="openTool('compare')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
+                <!-- HTML to PDF -->
+                <div data-category="convert" onclick="openTool('html2pdf')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
                     <div>
-                        <div class="w-12 h-12 rounded-xl bg-fuchsia-100 dark:bg-fuchsia-950/50 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-code-compare"></i>
+                        <div class="w-12 h-12 rounded-xl bg-cyan-100 dark:bg-cyan-950/50 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-code"></i>
                         </div>
-                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Compare PDF</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Display two PDF documents side-by-side to inspect changes and differences easily.</p>
-                    </div>
-                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
-                        <span>LAUNCH TOOL</span>
-                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
-                    </div>
-                </div>
-
-                <!-- Redact PDF -->
-                <div data-category="security edit" onclick="openTool('redact')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
-                    <div>
-                        <div class="w-12 h-12 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-marker"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Redact PDF</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Permanently blackout sensitive text, image areas, and confidential information.</p>
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">HTML to PDF</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Convert HTML snippets into readable PDF documents.</p>
                     </div>
                     <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
                         <span>LAUNCH TOOL</span>
@@ -539,32 +363,20 @@
     <!-- FOOTER -->
     <footer class="bg-slate-900 text-slate-300 border-t border-slate-800 py-12 px-4 sm:px-8">
         <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-6 gap-8 mb-12">
-            
-            <!-- PRODUCT -->
             <div>
                 <h4 class="text-white font-bold text-xs uppercase tracking-widest mb-4">Product</h4>
                 <ul class="space-y-2.5 text-sm">
                     <li><a href="#" onclick="switchView('home')" class="hover:text-white transition">Home</a></li>
-                    <li><a href="#" onclick="switchView('home')" class="hover:text-white transition">Features</a></li>
-                    <li><a href="#" class="hover:text-white transition">Pricing</a></li>
                     <li><a href="#" onclick="switchView('home')" class="hover:text-white transition">Tools</a></li>
-                    <li><a href="#" class="hover:text-white transition">FAQ</a></li>
                 </ul>
             </div>
-
-            <!-- RESOURCES -->
             <div>
                 <h4 class="text-white font-bold text-xs uppercase tracking-widest mb-4">Resources</h4>
                 <ul class="space-y-2.5 text-sm">
-                    <li><a href="#" class="hover:text-white transition">PaperNova Desktop</a></li>
                     <li><a href="#" class="hover:text-white transition">PaperNova Mobile</a></li>
                     <li><a href="#" class="hover:text-white transition">PaperNova Sign</a></li>
-                    <li><a href="#" class="hover:text-white transition">PaperNova API</a></li>
-                    <li><a href="#" class="hover:text-white transition">PaperNova IMG</a></li>
                 </ul>
             </div>
-
-            <!-- SOLUTIONS -->
             <div>
                 <h4 class="text-white font-bold text-xs uppercase tracking-widest mb-4">Solutions</h4>
                 <ul class="space-y-2.5 text-sm">
@@ -572,26 +384,18 @@
                     <li><a href="#" class="hover:text-white transition">Education</a></li>
                 </ul>
             </div>
-
-            <!-- LEGAL -->
             <div>
                 <h4 class="text-white font-bold text-xs uppercase tracking-widest mb-4">Legal</h4>
                 <ul class="space-y-2.5 text-sm">
                     <li><a href="#" class="hover:text-white transition">Security</a></li>
-                    <li><a href="#" class="hover:text-white transition">Privacy policy</a></li>
-                    <li><a href="#" class="hover:text-white transition">Terms & conditions</a></li>
-                    <li><a href="#" class="hover:text-white transition">Cookies</a></li>
+                    <li><a href="#" class="hover:text-white transition">Privacy Policy</a></li>
                 </ul>
             </div>
-
-            <!-- COMPANY -->
             <div>
                 <h4 class="text-white font-bold text-xs uppercase tracking-widest mb-4">Company</h4>
                 <ul class="space-y-2.5 text-sm">
                     <li><a href="#" class="hover:text-white transition">About us</a></li>
                     <li><a href="#" class="hover:text-white transition">Contact us</a></li>
-                    <li><a href="#" class="hover:text-white transition">Blog</a></li>
-                    <li><a href="#" class="hover:text-white transition">Press</a></li>
                 </ul>
             </div>
 
@@ -611,22 +415,7 @@
                         <div class="text-xs font-bold text-white">App Store</div>
                     </div>
                 </button>
-                <button onclick="downloadAppShortcut('Mac App Store', 'https://apps.apple.com/mac')" class="flex items-center gap-3 bg-slate-800 hover:bg-slate-700 px-4 py-2.5 rounded-xl border border-slate-700 transition text-left w-full cursor-pointer group">
-                    <i class="fa-solid fa-desktop text-xl text-sky-400 group-hover:scale-110 transition-transform"></i>
-                    <div>
-                        <div class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">Download on the</div>
-                        <div class="text-xs font-bold text-white">Mac App Store</div>
-                    </div>
-                </button>
-                <button onclick="downloadAppShortcut('Microsoft Store', 'https://apps.microsoft.com')" class="flex items-center gap-3 bg-slate-800 hover:bg-slate-700 px-4 py-2.5 rounded-xl border border-slate-700 transition text-left w-full cursor-pointer group">
-                    <i class="fa-brands fa-windows text-xl text-blue-400 group-hover:scale-110 transition-transform"></i>
-                    <div>
-                        <div class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">Get it from</div>
-                        <div class="text-xs font-bold text-white">Microsoft Store</div>
-                    </div>
-                </button>
             </div>
-
         </div>
 
         <div class="max-w-7xl mx-auto border-t border-slate-800 pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
@@ -634,7 +423,7 @@
                 <div class="w-6 h-6 rounded-lg bg-brand-600 text-white flex items-center justify-center font-bold text-xs">P</div>
                 <span class="font-bold text-slate-300">PaperNova</span> © 2026 PaperNova Ltd. All rights reserved.
             </div>
-            <div>Client-Side Browser Processing Engine — Maximum Privacy & Confidentiality</div>
+            <div>Client-Side Browser Engine — Maximum Privacy & Security</div>
         </div>
     </footer>
 
@@ -643,46 +432,32 @@
         // Configure PDF.js Worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        // Core Tool Definitions and Configurations
+        // Tool Definitions
         const toolConfigs = {
             merge: { title: 'Merge PDF Files', desc: 'Combine multiple PDFs into a single document in any order', accept: '.pdf' },
-            split: { title: 'Split PDF File', desc: 'Extract pages or split a PDF into separate files', accept: '.pdf' },
+            split: { title: 'Split PDF File', desc: 'Extract individual pages into separate PDF files', accept: '.pdf' },
             compress: { title: 'Compress PDF', desc: 'Optimize PDF structure and reduce file size', accept: '.pdf' },
-            pdf2word: { title: 'Convert PDF to Word', desc: 'Extract editable text and structure into a .docx document', accept: '.pdf' },
-            pdf2ppt: { title: 'PDF to PowerPoint', desc: 'Convert PDF slides into presentation deck formats', accept: '.pdf' },
-            pdf2excel: { title: 'PDF to Excel', desc: 'Extract PDF data tables into Excel files', accept: '.pdf' },
-            word2pdf: { title: 'Convert Word to PDF', desc: 'Convert DOCX documents into clean PDF files', accept: '.docx' },
-            ppt2pdf: { title: 'PowerPoint to PDF', desc: 'Convert PPT and PPTX slideshows into PDFs', accept: '.ppt,.pptx' },
-            excel2pdf: { title: 'Excel to PDF', desc: 'Convert XLS and XLSX spreadsheets into PDFs', accept: '.xls,.xlsx' },
-            edit: { title: 'Edit PDF', desc: 'Add annotations, text, images, or drawings directly to pages', accept: '.pdf' },
-            pdf2jpg: { title: 'PDF to Image (JPG/PNG)', desc: 'Render PDF pages into high-resolution images', accept: '.pdf' },
-            jpg2pdf: { title: 'Images to PDF', desc: 'Convert JPG, PNG, or WEBP images into a unified PDF file', accept: 'image/*' },
+            pdf2word: { title: 'Convert PDF to Word', desc: 'Extract editable text from PDF into a Word (.docx) document', accept: '.pdf' },
+            pdf2jpg: { title: 'PDF to Image (JPG/PNG)', desc: 'Render PDF pages into high-resolution JPG images', accept: '.pdf' },
+            jpg2pdf: { title: 'Images to PDF', desc: 'Convert JPG or PNG images into a PDF file', accept: 'image/*' },
             sign: { title: 'Sign PDF', desc: 'Draw or embed an electronic signature onto PDF pages', accept: '.pdf' },
-            watermark: { title: 'Add Watermark', desc: 'Stamp customizable text or logo over PDF pages', accept: '.pdf' },
-            rotate: { title: 'Rotate PDF Pages', desc: 'Rotate PDF pages clockwise or counter-clockwise', accept: '.pdf' },
-            html2pdf: { title: 'HTML to PDF', desc: 'Convert raw HTML code or web snippets into PDF', accept: '.html,.txt' },
-            unlock: { title: 'Unlock PDF', desc: 'Remove user passwords and restrictions from PDFs', accept: '.pdf' },
-            protect: { title: 'Protect PDF', desc: 'Encrypt your PDF document with a secure password', accept: '.pdf' },
-            organize: { title: 'Organize Pages', desc: 'Reorder, delete, or duplicate individual pages', accept: '.pdf' },
-            ocr: { title: 'Scan to PDF (OCR AI)', desc: 'Extract searchable text from scanned images and PDFs', accept: '.pdf,image/*' },
-            pagenumbers: { title: 'Add Page Numbers', desc: 'Insert formatted page numbers with custom placement', accept: '.pdf' },
-            compare: { title: 'Compare PDF', desc: 'Inspect differences between two PDF documents', accept: '.pdf' },
-            redact: { title: 'Redact PDF', desc: 'Blackout sensitive text and private areas permanently', accept: '.pdf' }
+            watermark: { title: 'Add Watermark', desc: 'Stamp customizable text over PDF pages', accept: '.pdf' },
+            rotate: { title: 'Rotate PDF Pages', desc: 'Rotate PDF pages clockwise', accept: '.pdf' },
+            html2pdf: { title: 'HTML to PDF', desc: 'Convert raw HTML code into PDF', accept: '.html,.txt' },
+            ocr: { title: 'Scan to Text (OCR AI)', desc: 'Extract searchable text from scanned images and PDFs', accept: '.pdf,image/*' },
+            pagenumbers: { title: 'Add Page Numbers', desc: 'Insert formatted page numbers onto your PDF', accept: '.pdf' }
         };
 
         // Application State
         let currentTool = 'merge';
         let selectedFiles = [];
-        let pageThumbnails = [];
         let sigDrawing = false;
         let sigCtx = null;
 
-        // Dark Mode Toggle
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
         }
 
-        // View Navigation
         function switchView(viewName) {
             if (viewName === 'home') {
                 document.getElementById('homeView').classList.remove('hidden');
@@ -691,7 +466,6 @@
             }
         }
 
-        // Tool Filtering & Searching
         function filterTools(category, btnElement) {
             const buttons = document.querySelectorAll('.filter-btn');
             buttons.forEach(btn => {
@@ -720,15 +494,12 @@
             });
         }
 
-        // Open Selected Tool Workspace
         function openTool(toolKey) {
             currentTool = toolKey;
             selectedFiles = [];
-            pageThumbnails = [];
 
             const config = toolConfigs[toolKey] || { title: 'PDF Tool', desc: 'Process your document', accept: '*/*' };
 
-            // Render Dynamic Workspace
             let workspace = document.getElementById('workspaceView');
             if (!workspace) {
                 workspace = document.createElement('section');
@@ -765,16 +536,24 @@
                             <input type="file" id="fileInput" accept="${config.accept}" multiple onchange="handleFileSelect(event)" class="hidden">
                         </div>
 
-                        <!-- Options & Dynamic Form Controls -->
+                        <!-- Dynamic Tool Form Options -->
                         <div id="dynamicToolControls" class="mt-6 max-w-lg mx-auto"></div>
 
-                        <!-- File & Page Preview List -->
+                        <!-- Loading Status Bar -->
+                        <div id="processingProgress" class="hidden mt-6 text-center">
+                            <div class="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-brand-50 dark:bg-slate-900 text-brand-600 dark:text-brand-400 font-bold text-sm">
+                                <i class="fa-solid fa-spinner fa-spin text-lg"></i>
+                                <span id="progressText">Processing document...</span>
+                            </div>
+                        </div>
+
+                        <!-- Preview Container -->
                         <div id="previewContainer" class="mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
                     </div>
 
-                    <!-- Action Execution Button -->
+                    <!-- Process Trigger -->
                     <div class="mt-8 border-t border-slate-200 dark:border-slate-700 pt-6 flex justify-end">
-                        <button id="processBtn" onclick="processActiveTool()" disabled class="px-8 py-3.5 rounded-2xl bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-bold text-base transition cursor-not-allowed flex items-center gap-2 shadow-lg">
+                        <button id="processBtn" onclick="processActiveTool()" ${currentTool === 'html2pdf' ? '' : 'disabled'} class="px-8 py-3.5 rounded-2xl ${currentTool === 'html2pdf' ? 'bg-brand-600 text-white hover:bg-brand-700 shadow-lg shadow-brand-500/30 cursor-pointer' : 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'} font-bold text-base transition flex items-center gap-2">
                             <span>Process & Download</span>
                             <i class="fa-solid fa-arrow-right"></i>
                         </button>
@@ -785,7 +564,6 @@
             setupOptionsPanel(toolKey);
         }
 
-        // Setup Controls for Specific Tools
         function setupOptionsPanel(toolKey) {
             const container = document.getElementById('dynamicToolControls');
             if (!container) return;
@@ -797,27 +575,30 @@
                     <button onclick="clearSig()" class="mt-2 text-xs text-brand-600 font-bold hover:underline">Clear Canvas</button>
                 `;
                 setTimeout(initSigCanvas, 100);
-            } else if (toolKey === 'protect') {
-                container.innerHTML = `
-                    <label class="block text-sm font-semibold mb-1">Set Password</label>
-                    <input type="password" id="protectPass" placeholder="Enter security password" class="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm mb-3">
-                `;
             } else if (toolKey === 'html2pdf') {
                 container.innerHTML = `
                     <label class="block text-sm font-semibold mb-1">Paste HTML Code</label>
-                    <textarea id="htmlInput" class="w-full h-32 p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-mono" placeholder="<h1>Hello World</h1>"></textarea>
+                    <textarea id="htmlInput" class="w-full h-32 p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-mono" placeholder="<h1>Hello PaperNova</h1><p>Client side PDF conversion!</p>"></textarea>
                 `;
             } else if (toolKey === 'watermark') {
                 container.innerHTML = `
                     <label class="block text-sm font-semibold mb-1">Watermark Text</label>
-                    <input type="text" id="watermarkText" placeholder="CONFIDENTIAL" value="CONFIDENTIAL" class="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm">
+                    <input type="text" id="watermarkText" value="CONFIDENTIAL" class="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm">
+                `;
+            } else if (toolKey === 'rotate') {
+                container.innerHTML = `
+                    <label class="block text-sm font-semibold mb-1">Rotation Angle</label>
+                    <select id="rotateAngle" class="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm">
+                        <option value="90">90 Degrees Clockwise</option>
+                        <option value="180">180 Degrees</option>
+                        <option value="270">270 Degrees Clockwise</option>
+                    </select>
                 `;
             } else {
                 container.innerHTML = '';
             }
         }
 
-        // File Selection & Drag Drop
         function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('border-brand-500'); }
         function handleDragLeave(e) { e.preventDefault(); e.currentTarget.classList.remove('border-brand-500'); }
         function handleDrop(e) {
@@ -834,7 +615,7 @@
             const container = document.getElementById('previewContainer');
             container.innerHTML = '';
 
-            selectedFiles.forEach((file, index) => {
+            selectedFiles.forEach((file) => {
                 const card = document.createElement('div');
                 card.className = "bg-slate-100 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-between text-center relative";
                 card.innerHTML = `
@@ -850,7 +631,6 @@
             btn.className = "px-8 py-3.5 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-base transition cursor-pointer flex items-center gap-2 shadow-lg shadow-brand-500/30";
         }
 
-        // Signature Canvas Utilities
         function initSigCanvas() {
             const canvas = document.getElementById('sigCanvas');
             if (!canvas) return;
@@ -870,7 +650,6 @@
             if (canvas && sigCtx) sigCtx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        // Download Trigger Helper
         function downloadBlob(blob, filename) {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -882,7 +661,6 @@
             URL.revokeObjectURL(url);
         }
 
-        // App Store Download Link Creator Function
         function downloadAppShortcut(storeName, targetUrl) {
             const fileContent = `[InternetShortcut]\nURL=${targetUrl}\nIDList=\nHotKey=0\nIconFile=PaperNova\n`;
             const blob = new Blob([fileContent], { type: 'text/plain' });
@@ -890,50 +668,58 @@
             downloadBlob(blob, `PaperNova_${sanitizedName}_installer.url`);
         }
 
-        // Main Tool Execution Handler
+        function setProcessing(isProcessing, text = 'Processing document...') {
+            const progress = document.getElementById('processingProgress');
+            const progressText = document.getElementById('progressText');
+            const btn = document.getElementById('processBtn');
+
+            if (isProcessing) {
+                if (progress) progress.classList.remove('hidden');
+                if (progressText) progressText.innerText = text;
+                if (btn) btn.disabled = true;
+            } else {
+                if (progress) progress.classList.add('hidden');
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        // Processing Logic for All Tools
         async function processActiveTool() {
             if (selectedFiles.length === 0 && currentTool !== 'html2pdf') return;
 
+            setProcessing(true, 'Reading input document...');
+
             try {
-                if (currentTool === 'merge') {
-                    const mergedPdf = await PDFLib.PDFDocument.create();
-                    for (const file of selectedFiles) {
-                        const pdfBytes = await file.arrayBuffer();
-                        const pdf = await PDFLib.PDFDocument.load(pdfBytes);
-                        const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-                        pages.forEach(p => mergedPdf.addPage(p));
+                // 1. PDF TO JPG / IMAGES
+                if (currentTool === 'pdf2jpg') {
+                    setProcessing(true, 'Rendering PDF pages to JPG images...');
+                    const pdfData = await selectedFiles[0].arrayBuffer();
+                    const pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise;
+
+                    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                        setProcessing(true, `Rendering Page ${pageNum} of ${pdfDoc.numPages}...`);
+                        const page = await pdfDoc.getPage(pageNum);
+                        const viewport = page.getViewport({ scale: 2.0 });
+
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+
+                        await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+                        canvas.toBlob((blob) => {
+                            const baseName = selectedFiles[0].name.replace(/\.[^/.]+$/, "");
+                            downloadBlob(blob, `${baseName}_page_${pageNum}.jpg`);
+                        }, 'image/jpeg', 0.92);
                     }
-                    const pdfBytes = await mergedPdf.save();
-                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), 'merged_document.pdf');
                 }
-                else if (currentTool === 'sign') {
-                    const canvas = document.getElementById('sigCanvas');
-                    if (!canvas) return;
-                    const sigImgUrl = canvas.toDataURL('image/png');
-                    const pdfDoc = await PDFLib.PDFDocument.load(await selectedFiles[0].arrayBuffer());
-                    const img = await pdfDoc.embedPng(sigImgUrl);
-                    const firstPage = pdfDoc.getPages()[0];
-                    firstPage.drawImage(img, { x: 50, y: 50, width: 150, height: 60 });
-                    downloadBlob(new Blob([await pdfDoc.save()], { type: 'application/pdf' }), 'signed_document.pdf');
-                }
-                else if (currentTool === 'watermark') {
-                    const text = document.getElementById('watermarkText')?.value || 'CONFIDENTIAL';
-                    const pdfDoc = await PDFLib.PDFDocument.load(await selectedFiles[0].arrayBuffer());
-                    const pages = pdfDoc.getPages();
-                    pages.forEach(page => {
-                        const { width, height } = page.getSize();
-                        page.drawText(text, {
-                            x: width / 4,
-                            y: height / 2,
-                            size: 48,
-                            opacity: 0.35,
-                            rotate: PDFLib.degrees(45)
-                        });
-                    });
-                    downloadBlob(new Blob([await pdfDoc.save()], { type: 'application/pdf' }), 'watermarked_document.pdf');
-                }
+
+                // 2. JPG TO PDF
                 else if (currentTool === 'jpg2pdf') {
+                    setProcessing(true, 'Converting images into PDF...');
                     const pdfDoc = await PDFLib.PDFDocument.create();
+
                     for (const file of selectedFiles) {
                         const imgBytes = await file.arrayBuffer();
                         let img;
@@ -945,14 +731,200 @@
                         const page = pdfDoc.addPage([img.width, img.height]);
                         page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
                     }
-                    downloadBlob(new Blob([await pdfDoc.save()], { type: 'application/pdf' }), 'images_converted.pdf');
+
+                    const pdfBytes = await pdfDoc.save();
+                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), 'converted_images.pdf');
                 }
-                else {
-                    // Generic fallback for direct document processing
-                    alert(`Processing complete for ${toolConfigs[currentTool]?.title || 'Tool'}. Direct format download generated!`);
+
+                // 3. MERGE PDF
+                else if (currentTool === 'merge') {
+                    setProcessing(true, 'Merging PDF files...');
+                    const mergedPdf = await PDFLib.PDFDocument.create();
+
+                    for (const file of selectedFiles) {
+                        const pdfBytes = await file.arrayBuffer();
+                        const pdf = await PDFLib.PDFDocument.load(pdfBytes);
+                        const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                        pages.forEach(p => mergedPdf.addPage(p));
+                    }
+
+                    const pdfBytes = await mergedPdf.save();
+                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), 'merged_document.pdf');
                 }
+
+                // 4. SPLIT PDF
+                else if (currentTool === 'split') {
+                    setProcessing(true, 'Splitting PDF pages into individual documents...');
+                    const pdfBytes = await selectedFiles[0].arrayBuffer();
+                    const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+                    const pageCount = pdfDoc.getPageCount();
+
+                    for (let i = 0; i < pageCount; i++) {
+                        const newPdf = await PDFLib.PDFDocument.create();
+                        const [copiedPage] = await newPdf.copyPages(pdfDoc, [i]);
+                        newPdf.addPage(copiedPage);
+
+                        const newBytes = await newPdf.save();
+                        const baseName = selectedFiles[0].name.replace(/\.[^/.]+$/, "");
+                        downloadBlob(new Blob([newBytes], { type: 'application/pdf' }), `${baseName}_page_${i + 1}.pdf`);
+                    }
+                }
+
+                // 5. PDF TO WORD (.DOCX)
+                else if (currentTool === 'pdf2word') {
+                    setProcessing(true, 'Extracting text and structure into Word document...');
+                    const pdfData = await selectedFiles[0].arrayBuffer();
+                    const pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise;
+
+                    let fullTextLines = [];
+
+                    for (let i = 1; i <= pdfDoc.numPages; i++) {
+                        setProcessing(true, `Extracting text from page ${i} of ${pdfDoc.numPages}...`);
+                        const page = await pdfDoc.getPage(i);
+                        const textContent = await page.getTextContent();
+                        const pageText = textContent.items.map(item => item.str).join(' ');
+                        fullTextLines.push(`--- Page ${i} ---`);
+                        fullTextLines.push(pageText);
+                    }
+
+                    const doc = new docx.Document({
+                        sections: [{
+                            properties: {},
+                            children: fullTextLines.map(line => new docx.Paragraph({
+                                children: [new docx.TextRun(line)]
+                            }))
+                        }]
+                    });
+
+                    const blob = await docx.Packer.toBlob(doc);
+                    const baseName = selectedFiles[0].name.replace(/\.[^/.]+$/, "");
+                    downloadBlob(blob, `${baseName}_converted.docx`);
+                }
+
+                // 6. SIGN PDF
+                else if (currentTool === 'sign') {
+                    setProcessing(true, 'Embedding signature into PDF...');
+                    const canvas = document.getElementById('sigCanvas');
+                    if (!canvas) throw new Error("Signature canvas empty");
+                    
+                    const sigImgUrl = canvas.toDataURL('image/png');
+                    const pdfDoc = await PDFLib.PDFDocument.load(await selectedFiles[0].arrayBuffer());
+                    const img = await pdfDoc.embedPng(sigImgUrl);
+                    const firstPage = pdfDoc.getPages()[0];
+                    firstPage.drawImage(img, { x: 50, y: 50, width: 180, height: 75 });
+
+                    const pdfBytes = await pdfDoc.save();
+                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), 'signed_document.pdf');
+                }
+
+                // 7. WATERMARK PDF
+                else if (currentTool === 'watermark') {
+                    setProcessing(true, 'Stamping watermark...');
+                    const text = document.getElementById('watermarkText')?.value || 'CONFIDENTIAL';
+                    const pdfDoc = await PDFLib.PDFDocument.load(await selectedFiles[0].arrayBuffer());
+                    const pages = pdfDoc.getPages();
+
+                    pages.forEach(page => {
+                        const { width, height } = page.getSize();
+                        page.drawText(text, {
+                            x: width / 4,
+                            y: height / 2,
+                            size: 42,
+                            opacity: 0.35,
+                            rotate: PDFLib.degrees(45)
+                        });
+                    });
+
+                    const pdfBytes = await pdfDoc.save();
+                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), 'watermarked_document.pdf');
+                }
+
+                // 8. ROTATE PDF
+                else if (currentTool === 'rotate') {
+                    setProcessing(true, 'Rotating PDF pages...');
+                    const angle = parseInt(document.getElementById('rotateAngle')?.value || '90');
+                    const pdfDoc = await PDFLib.PDFDocument.load(await selectedFiles[0].arrayBuffer());
+                    const pages = pdfDoc.getPages();
+
+                    pages.forEach(page => {
+                        const currentRotation = page.getRotation().angle;
+                        page.setRotation(PDFLib.degrees((currentRotation + angle) % 360));
+                    });
+
+                    const pdfBytes = await pdfDoc.save();
+                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), 'rotated_document.pdf');
+                }
+
+                // 9. OCR AI SCAN TO TEXT
+                else if (currentTool === 'ocr') {
+                    setProcessing(true, 'Running Optical Character Recognition AI...');
+                    const result = await Tesseract.recognize(selectedFiles[0], 'eng', {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                setProcessing(true, `OCR Progress: ${Math.round(m.progress * 100)}%`);
+                            }
+                        }
+                    });
+
+                    const textBlob = new Blob([result.data.text], { type: 'text/plain;charset=utf-8' });
+                    const baseName = selectedFiles[0].name.replace(/\.[^/.]+$/, "");
+                    downloadBlob(textBlob, `${baseName}_extracted_ocr.txt`);
+                }
+
+                // 10. PAGE NUMBERS
+                else if (currentTool === 'pagenumbers') {
+                    setProcessing(true, 'Adding page numbers...');
+                    const pdfDoc = await PDFLib.PDFDocument.load(await selectedFiles[0].arrayBuffer());
+                    const pages = pdfDoc.getPages();
+                    const totalPages = pages.length;
+
+                    pages.forEach((page, index) => {
+                        const { width } = page.getSize();
+                        page.drawText(`Page ${index + 1} of ${totalPages}`, {
+                            x: width / 2 - 30,
+                            y: 20,
+                            size: 10,
+                            opacity: 0.7
+                        });
+                    });
+
+                    const pdfBytes = await pdfDoc.save();
+                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), 'numbered_document.pdf');
+                }
+
+                // 11. HTML TO PDF
+                else if (currentTool === 'html2pdf') {
+                    setProcessing(true, 'Generating PDF from HTML content...');
+                    const htmlCode = document.getElementById('htmlInput')?.value || '<h1>PaperNova Document</h1>';
+                    
+                    const pdfDoc = await PDFLib.PDFDocument.create();
+                    const page = pdfDoc.addPage([595.28, 841.89]); // A4 Size
+                    
+                    const cleanText = htmlCode.replace(/<[^>]*>?/gm, ' ');
+                    page.drawText(cleanText.substring(0, 1500), {
+                        x: 40,
+                        y: 800,
+                        size: 12,
+                        lineHeight: 16
+                    });
+
+                    const pdfBytes = await pdfDoc.save();
+                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), 'html_converted.pdf');
+                }
+
+                // 12. COMPRESS PDF
+                else if (currentTool === 'compress') {
+                    setProcessing(true, 'Optimizing PDF structure and stream objects...');
+                    const pdfDoc = await PDFLib.PDFDocument.load(await selectedFiles[0].arrayBuffer());
+                    const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
+                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), 'compressed_document.pdf');
+                }
+
             } catch (err) {
+                console.error(err);
                 alert('Error processing file: ' + err.message);
+            } finally {
+                setProcessing(false);
             }
         }
     </script>
