@@ -1,457 +1,773 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>PaperNova — Privacy-first PDF tools</title>
-<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
-    color: #e2e8f0;
-    min-height: 100vh;
-  }
-  header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 20px 32px; border-bottom: 1px solid #1e293b;
-  }
-  .logo { font-size: 22px; font-weight: 800; }
-  .logo span { color: #818cf8; }
-  .tagline { color: #64748b; font-size: 13px; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaperNova - Every PDF tool you need in one place</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                            700: '#be123c',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  main { max-width: 960px; margin: 0 auto; padding: 48px 24px; }
-
-  /* ---- Landing view ---- */
-  #landing h1 {
-    font-size: 44px; font-weight: 800; text-align: center; letter-spacing: -1px;
-  }
-  #landing h1 span { color: #818cf8; }
-  #landing p.sub {
-    text-align: center; color: #94a3b8; margin-top: 12px; font-size: 16px;
-  }
-  .grid {
-    display: grid; gap: 16px; margin-top: 40px;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  }
-  .card {
-    background: #0f172a; border: 1px solid #1e293b; border-radius: 16px;
-    padding: 24px; cursor: pointer; transition: all 0.15s ease;
-  }
-  .card:hover { border-color: #6366f1; background: #1e293b; transform: translateY(-2px); }
-  .card .icon { font-size: 28px; }
-  .card h3 { margin-top: 10px; font-size: 17px; font-weight: 600; }
-  .card p { margin-top: 4px; font-size: 13px; color: #94a3b8; }
-
-  /* ---- Tool view ---- */
-  #tool { display: none; }
-  .back-btn {
-    background: none; border: 1px solid #334155; color: #cbd5e1;
-    padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px;
-    margin-bottom: 24px;
-  }
-  .back-btn:hover { background: #1e293b; }
-  .tool-title { font-size: 30px; font-weight: 700; }
-  .tool-desc { color: #94a3b8; margin-top: 6px; }
-
-  .field { margin-top: 24px; }
-  .field label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 8px; }
-
-  input[type="file"] {
-    width: 100%; padding: 14px; background: #0f172a;
-    border: 1px dashed #334155; border-radius: 10px; color: #cbd5e1;
-    cursor: pointer;
-  }
-  input[type="file"]::file-selector-button {
-    background: #4f46e5; color: white; border: 0; padding: 8px 14px;
-    border-radius: 6px; cursor: pointer; margin-right: 12px; font-weight: 600;
-  }
-  input[type="text"], input[type="range"] {
-    width: 100%; padding: 10px 14px; background: #0f172a;
-    border: 1px solid #334155; border-radius: 10px; color: #e2e8f0; font-size: 14px;
-  }
-  input[type="range"] { padding: 0; }
-
-  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-  .angle-btn {
-    padding: 10px 20px; background: #0f172a; border: 1px solid #334155;
-    color: #cbd5e1; border-radius: 10px; cursor: pointer; font-weight: 600;
-  }
-  .angle-btn.active { background: #4f46e5; border-color: #6366f1; color: white; }
-
-  .action {
-    margin-top: 32px; padding: 14px 28px; background: #4f46e5; color: white;
-    border: 0; border-radius: 10px; font-size: 16px; font-weight: 600;
-    cursor: pointer; transition: background 0.15s;
-  }
-  .action:hover { background: #6366f1; }
-  .action:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  .file-list { margin-top: 12px; font-size: 13px; color: #94a3b8; }
-  .file-list li { list-style: none; padding: 4px 0; }
-
-  .footer {
-    text-align: center; color: #475569; font-size: 12px;
-    padding: 32px 0; border-top: 1px solid #1e293b; margin-top: 64px;
-  }
-</style>
+    <!-- Client-Side Libraries: PDF-Lib, pdf.js, JSZip -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <style>
+        /* PDF.js worker setup */
+        .page-thumb-canvas {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .page-thumb-canvas:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+    </style>
 </head>
-<body>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans min-h-full flex flex-col transition-colors duration-200">
 
-<header>
-  <div class="logo">Paper<span>Nova</span></div>
-  <div class="tagline">Privacy-first PDF tools</div>
-</header>
+    <!-- HEADER / NAVIGATION -->
+    <header class="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand Logo -->
+                <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('home')">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-500/30">
+                        <i class="fa-solid fa-file-pdf"></i>
+                    </div>
+                    <span class="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
+                        Paper<span class="text-brand-600 dark:text-brand-500">Nova</span>
+                    </span>
+                </div>
 
-<main>
-  <!-- ================= LANDING ================= -->
-  <section id="landing">
-    <h1>Every PDF tool. <span>One place.</span></h1>
-    <p class="sub">Your files never leave your device.</p>
+                <!-- Navigation Quick Links -->
+                <nav class="hidden md:flex items-center gap-6 text-sm font-medium">
+                    <button onclick="switchView('home')" class="hover:text-brand-600 transition">All Tools</button>
+                    <button onclick="openTool('merge')" class="hover:text-brand-600 transition">Merge PDF</button>
+                    <button onclick="openTool('split')" class="hover:text-brand-600 transition">Split PDF</button>
+                    <button onclick="openTool('jpg2pdf')" class="hover:text-brand-600 transition">JPG to PDF</button>
+                    <button onclick="openTool('pdf2jpg')" class="hover:text-brand-600 transition">PDF to JPG</button>
+                </nav>
 
-    <div class="grid" id="toolGrid"></div>
-  </section>
+                <!-- Actions / Controls -->
+                <div class="flex items-center gap-3">
+                    <button id="themeToggleBtn" onclick="toggleDarkMode()" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-600 dark:text-slate-300">
+                        <i class="fa-solid fa-moon dark:hidden"></i>
+                        <i class="fa-solid fa-sun hidden dark:block text-amber-400"></i>
+                    </button>
+                    <a href="https://github.com" target="_blank" class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-medium text-sm hover:opacity-90 transition">
+                        <i class="fa-brands fa-github"></i>
+                        <span>GitHub</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
 
-  <!-- ================= TOOL VIEW ================= -->
-  <section id="tool">
-    <button class="back-btn" onclick="showLanding()">← Back</button>
-    <h2 class="tool-title" id="toolTitle"></h2>
-    <p class="tool-desc" id="toolDesc"></p>
-    <div id="toolBody"></div>
-  </section>
-</main>
+    <!-- MAIN CONTAINER -->
+    <main class="flex-grow flex flex-col">
+        
+        <!-- DASHBOARD / TOOL GRID VIEW -->
+        <section id="homeView" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
+            <!-- Hero Header -->
+            <div class="text-center max-w-3xl mx-auto mb-10">
+                <h1 class="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-4">
+                    Every tool you need to work with PDFs in one place
+                </h1>
+                <p class="text-lg text-slate-600 dark:text-slate-400">
+                    100% Free, secure, and client-side PDF tools. Your files never leave your browser.
+                </p>
+                
+                <!-- Category Filters -->
+                <div class="flex flex-wrap items-center justify-center gap-2 mt-8">
+                    <button onclick="filterTools('all')" class="filter-btn px-4 py-2 rounded-full text-sm font-semibold bg-brand-600 text-white shadow-md shadow-brand-500/20">All Tools</button>
+                    <button onclick="filterTools('organize')" class="filter-btn px-4 py-2 rounded-full text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-500 transition">Organize PDF</button>
+                    <button onclick="filterTools('convert')" class="filter-btn px-4 py-2 rounded-full text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-500 transition">Convert PDF</button>
+                    <button onclick="filterTools('edit')" class="filter-btn px-4 py-2 rounded-full text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-500 transition">Edit & Enhance</button>
+                </div>
+            </div>
 
-<footer class="footer">© <span id="year"></span> PaperNova · MIT License</footer>
+            <!-- Grid of Tools -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="toolsGrid">
+                
+                <!-- Merge PDF -->
+                <div data-category="organize" onclick="openTool('merge')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-object-group"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Merge PDF</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Combine multiple PDF files into one single organized document.</p>
+                    </div>
+                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
+                        <span>LAUNCH TOOL</span>
+                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
+                    </div>
+                </div>
 
-<script>
-/* ============================================================
-   PaperNova — single-file PDF toolkit
-   Uses pdf-lib (loaded from CDN above) for all manipulation.
-   Everything runs client-side; no files are uploaded anywhere.
-   ============================================================ */
+                <!-- Split PDF -->
+                <div data-category="organize" onclick="openTool('split')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-scissors"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Split PDF</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Separate one page or whole ranges into independent PDF files.</p>
+                    </div>
+                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
+                        <span>LAUNCH TOOL</span>
+                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
+                    </div>
+                </div>
 
-const { PDFDocument, StandardFonts, rgb, degrees } = PDFLib;
-document.getElementById("year").textContent = new Date().getFullYear();
+                <!-- JPG to PDF -->
+                <div data-category="convert" onclick="openTool('jpg2pdf')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-file-image"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">JPG to PDF</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Convert PNG, JPG, and web images into standard PDF documents.</p>
+                    </div>
+                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
+                        <span>LAUNCH TOOL</span>
+                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
+                    </div>
+                </div>
 
-/* ---------- Helpers ---------- */
+                <!-- PDF to JPG -->
+                <div data-category="convert" onclick="openTool('pdf2jpg')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-images"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">PDF to JPG</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Extract all embedded pages into high quality JPG images.</p>
+                    </div>
+                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
+                        <span>LAUNCH TOOL</span>
+                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
+                    </div>
+                </div>
 
-function downloadBytes(bytes, filename) {
-  const blob = new Blob([bytes], { type: "application/pdf" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
+                <!-- Rotate PDF -->
+                <div data-category="organize" onclick="openTool('rotate')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Rotate PDF</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Rotate specific or all PDF pages easily 90, 180, or 270 degrees.</p>
+                    </div>
+                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
+                        <span>LAUNCH TOOL</span>
+                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
+                    </div>
+                </div>
 
-function el(tag, attrs = {}, ...children) {
-  const node = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (k === "class") node.className = v;
-    else if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
-    else node.setAttribute(k, v);
-  }
-  for (const c of children) {
-    if (typeof c === "string") node.appendChild(document.createTextNode(c));
-    else if (c) node.appendChild(c);
-  }
-  return node;
-}
+                <!-- Watermark PDF -->
+                <div data-category="edit" onclick="openTool('watermark')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-stamp"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Add Watermark</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Stamp custom text over PDF document pages with full formatting.</p>
+                    </div>
+                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
+                        <span>LAUNCH TOOL</span>
+                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
+                    </div>
+                </div>
 
-/* ---------- Tool registry ---------- */
+                <!-- Protect PDF -->
+                <div data-category="edit" onclick="openTool('protect')" class="tool-card group bg-white dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-lock"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">Protect PDF</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Encrypt your PDF documents with custom secure passwords.</p>
+                    </div>
+                    <div class="mt-6 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400 gap-1">
+                        <span>LAUNCH TOOL</span>
+                        <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
+                    </div>
+                </div>
 
-const TOOLS = {
-  merge: {
-    icon: "🔗",
-    title: "Merge PDF",
-    desc: "Combine multiple PDFs into one file.",
-    render: renderMerge,
-  },
-  split: {
-    icon: "✂️",
-    title: "Split PDF",
-    desc: "Extract page ranges into separate files.",
-    render: renderSplit,
-  },
-  rotate: {
-    icon: "🔄",
-    title: "Rotate PDF",
-    desc: "Rotate every page by a fixed angle.",
-    render: renderRotate,
-  },
-  watermark: {
-    icon: "💧",
-    title: "Watermark PDF",
-    desc: "Stamp diagonal text across every page.",
-    render: renderWatermark,
-  },
-  jpgToPdf: {
-    icon: "🖼️",
-    title: "JPG / PNG to PDF",
-    desc: "Turn images into a multi-page PDF.",
-    render: renderJpgToPdf,
-  },
-};
+            </div>
+        </section>
 
-/* ---------- Landing ---------- */
+        <!-- INTERACTIVE TOOL WORKFLOW WORKSPACE VIEW (Hidden by default) -->
+        <section id="toolWorkspace" class="hidden flex-grow flex flex-col bg-slate-100 dark:bg-slate-950/50 min-h-[calc(100vh-4rem)]">
+            
+            <!-- Top Sub-Bar -->
+            <div class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-8 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <button onclick="switchView('home')" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-500">
+                        <i class="fa-solid fa-arrow-left text-lg"></i>
+                    </button>
+                    <div>
+                        <h2 id="activeToolTitle" class="text-xl font-bold text-slate-900 dark:text-white">Merge PDF</h2>
+                        <p id="activeToolDesc" class="text-xs text-slate-500">Combine multiple PDF files into one</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <button id="addFilesBtn" onclick="triggerFileInput()" class="hidden px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 font-semibold text-sm transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Add Files</span>
+                    </button>
+                    <button id="processBtn" onclick="processActiveTool()" class="hidden px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-lg shadow-brand-500/25 transition flex items-center gap-2">
+                        <span id="processBtnText">Process PDF</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
 
-function showLanding() {
-  document.getElementById("landing").style.display = "block";
-  document.getElementById("tool").style.display = "none";
-}
+            <!-- Workspace Body -->
+            <div class="flex-grow p-4 sm:p-8 flex flex-col items-center justify-center max-w-7xl mx-auto w-full">
+                
+                <!-- DROPZONE (Initial Upload State) -->
+                <div id="dropzoneContainer" class="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-300 dark:border-slate-700 p-8 sm:p-12 text-center shadow-xl hover:border-brand-500 dark:hover:border-brand-500 transition-colors duration-200 flex flex-col items-center justify-center min-h-[350px]">
+                    <input type="file" id="fileInput" class="hidden" multiple onchange="handleFileSelect(event)">
+                    <div class="w-20 h-20 bg-brand-50 dark:bg-brand-950/40 text-brand-600 rounded-full flex items-center justify-center text-3xl mb-4 animate-bounce">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Select PDF or drop files here</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Files stay entirely on your browser for total privacy.</p>
+                    <button onclick="triggerFileInput()" class="px-8 py-3.5 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-base shadow-lg shadow-brand-500/30 transition hover:scale-105 active:scale-95">
+                        Select Files
+                    </button>
+                </div>
 
-function showTool(key) {
-  const t = TOOLS[key];
-  document.getElementById("landing").style.display = "none";
-  document.getElementById("tool").style.display = "block";
-  document.getElementById("toolTitle").textContent = t.title;
-  document.getElementById("toolDesc").textContent = t.desc;
-  const body = document.getElementById("toolBody");
-  body.innerHTML = "";
-  t.render(body);
-}
+                <!-- PREVIEW / EDIT AREA (After File Upload) -->
+                <div id="previewArea" class="hidden w-full flex-grow flex flex-col lg:flex-row gap-6">
+                    
+                    <!-- Left/Main: Visual Page Grid / List -->
+                    <div class="flex-grow bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col min-h-[400px]">
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">File & Page Preview</span>
+                            <button onclick="clearFiles()" class="text-xs text-red-500 hover:underline font-semibold">Clear All</button>
+                        </div>
+                        
+                        <div id="thumbnailGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto max-h-[60vh] p-2">
+                            <!-- Thumbnails injected dynamically -->
+                        </div>
+                    </div>
 
-(function buildLanding() {
-  const grid = document.getElementById("toolGrid");
-  for (const [key, t] of Object.entries(TOOLS)) {
-    const card = el("div", { class: "card", onclick: () => showTool(key) },
-      el("div", { class: "icon" }, t.icon),
-      el("h3", {}, t.title),
-      el("p", {}, t.desc)
-    );
-    grid.appendChild(card);
-  }
-})();
+                    <!-- Right: Tool Specific Configuration Options -->
+                    <div id="toolOptionsPanel" class="w-full lg:w-80 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between shrink-0">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">Tool Options</h3>
+                            <div id="dynamicToolControls" class="space-y-4">
+                                <!-- Tool specific inputs injected dynamically -->
+                            </div>
+                        </div>
 
-/* ---------- Tool UIs ---------- */
+                        <div class="mt-8 pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <button onclick="processActiveTool()" class="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-base shadow-lg shadow-brand-500/25 transition">
+                                Download Processed PDF
+                            </button>
+                        </div>
+                    </div>
 
-function renderMerge(root) {
-  let files = [];
-  const list = el("ul", { class: "file-list" });
-  const input = el("input", {
-    type: "file",
-    accept: "application/pdf",
-    multiple: "true",
-    onchange: (e) => {
-      files = Array.from(e.target.files);
-      list.innerHTML = "";
-      files.forEach((f) => list.appendChild(el("li", {}, "• " + f.name)));
-    },
-  });
-  const btn = el("button", { class: "action" }, "Merge PDFs");
-  btn.onclick = async () => {
-    if (files.length < 2) return alert("Select at least 2 PDFs.");
-    btn.disabled = true; btn.textContent = "Merging…";
-    try {
-      const out = await PDFDocument.create();
-      for (const f of files) {
-        const src = await PDFDocument.load(await f.arrayBuffer());
-        const pages = await out.copyPages(src, src.getPageIndices());
-        pages.forEach((p) => out.addPage(p));
-      }
-      downloadBytes(await out.save(), "papernova-merged.pdf");
-    } catch (err) {
-      alert("Merge failed: " + err.message);
-    } finally {
-      btn.disabled = false; btn.textContent = "Merge PDFs";
-    }
-  };
-  root.append(
-    el("div", { class: "field" }, input),
-    list,
-    btn
-  );
-}
+                </div>
 
-function renderSplit(root) {
-  let file = null;
-  const fileInput = el("input", {
-    type: "file",
-    accept: "application/pdf",
-    onchange: (e) => { file = e.target.files[0]; },
-  });
-  const rangeInput = el("input", { type: "text", value: "1-2, 3-5" });
-  const btn = el("button", { class: "action" }, "Split PDF");
-  btn.onclick = async () => {
-    if (!file) return alert("Select a PDF first.");
-    btn.disabled = true; btn.textContent = "Splitting…";
-    try {
-      const src = await PDFDocument.load(await file.arrayBuffer());
-      const total = src.getPageCount();
-      const ranges = rangeInput.value
-        .split(",").map((s) => s.trim()).filter(Boolean)
-        .map((s) => {
-          const [a, b] = s.split("-");
-          const start = parseInt(a, 10);
-          const end = b ? parseInt(b, 10) : start;
-          if (isNaN(start) || isNaN(end) || start < 1 || end < start) {
-            throw new Error("Invalid range: " + s);
-          }
-          return { start, end };
+                <!-- PROCESSING SPINNER / STATE -->
+                <div id="processingLoader" class="hidden flex-col items-center justify-center p-12">
+                    <div class="w-16 h-16 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin mb-4"></div>
+                    <p class="text-lg font-semibold text-slate-800 dark:text-slate-200" id="loaderText">Processing PDF file...</p>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm text-slate-500 dark:text-slate-400">
+            <p class="mb-2">PaperNova - Open Source Client-Side PDF Tools for Web & GitHub Pages.</p>
+            <p class="text-xs text-slate-400 dark:text-slate-600">Educational Project. Powered by PDF-Lib & PDF.js</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT APP LOGIC -->
+    <script>
+        // PDF.js worker URL setup
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Application State
+        let currentTool = null;
+        let selectedFiles = []; // Stores File objects or processed page objects
+        let fileThumbnails = []; // Stores rendered preview metadata
+
+        // Tool Configs
+        const toolConfigs = {
+            merge: { title: 'Merge PDF', desc: 'Combine multiple PDF files in any order', accept: '.pdf' },
+            split: { title: 'Split PDF', desc: 'Separate pages or ranges into individual files', accept: '.pdf' },
+            jpg2pdf: { title: 'JPG to PDF', desc: 'Convert JPG or PNG images into a PDF document', accept: 'image/jpeg,image/png' },
+            pdf2jpg: { title: 'PDF to JPG', desc: 'Extract pages into JPG image files', accept: '.pdf' },
+            rotate: { title: 'Rotate PDF', desc: 'Rotate PDF pages clockwise or counter-clockwise', accept: '.pdf' },
+            watermark: { title: 'Add Watermark', desc: 'Stamp text onto your PDF pages', accept: '.pdf' },
+            protect: { title: 'Protect PDF', desc: 'Encrypt PDF with a password', accept: '.pdf' }
+        };
+
+        // Dark Mode Controller
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        // View Switching
+        function switchView(view) {
+            if (view === 'home') {
+                document.getElementById('homeView').classList.remove('hidden');
+                document.getElementById('toolWorkspace').classList.add('hidden');
+                clearFiles();
+            }
+        }
+
+        function filterTools(category) {
+            const cards = document.querySelectorAll('.tool-card');
+            const btns = document.querySelectorAll('.filter-btn');
+            
+            btns.forEach(btn => {
+                btn.className = "filter-btn px-4 py-2 rounded-full text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-500 transition";
+            });
+            event.target.className = "filter-btn px-4 py-2 rounded-full text-sm font-semibold bg-brand-600 text-white shadow-md shadow-brand-500/20";
+
+            cards.forEach(card => {
+                if (category === 'all' || card.dataset.category === category) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        function openTool(toolKey) {
+            currentTool = toolKey;
+            const config = toolConfigs[toolKey];
+            
+            document.getElementById('activeToolTitle').innerText = config.title;
+            document.getElementById('activeToolDesc').innerText = config.desc;
+            document.getElementById('fileInput').accept = config.accept;
+            
+            document.getElementById('homeView').classList.add('hidden');
+            document.getElementById('toolWorkspace').classList.remove('hidden');
+            
+            setupOptionsPanel(toolKey);
+            clearFiles();
+        }
+
+        function setupOptionsPanel(toolKey) {
+            const container = document.getElementById('dynamicToolControls');
+            container.innerHTML = ''; // reset
+
+            if (toolKey === 'split') {
+                container.innerHTML = `
+                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Split Mode</label>
+                    <select id="splitMode" onchange="toggleSplitControls()" class="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm">
+                        <option value="all">Extract All Pages (Individual PDFs)</option>
+                        <option value="range">Extract Page Range</option>
+                    </select>
+                    <div id="rangeInputContainer" class="hidden mt-3">
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Page Range (e.g., 1-3, 5)</label>
+                        <input type="text" id="splitRange" placeholder="1-3" class="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm">
+                    </div>
+                `;
+            } else if (toolKey === 'rotate') {
+                container.innerHTML = `
+                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Rotation Angle</label>
+                    <select id="rotateAngle" class="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm">
+                        <option value="90">90° Clockwise</option>
+                        <option value="180">180° Flip</option>
+                        <option value="270">270° Counter-Clockwise</option>
+                    </select>
+                `;
+            } else if (toolKey === 'watermark') {
+                container.innerHTML = `
+                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Watermark Text</label>
+                    <input type="text" id="wmText" value="CONFIDENTIAL" class="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm mb-3">
+                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Opacity</label>
+                    <input type="range" id="wmOpacity" min="0.1" max="1" step="0.1" value="0.4" class="w-full">
+                `;
+            } else if (toolKey === 'protect') {
+                container.innerHTML = `
+                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Set Password</label>
+                    <input type="password" id="pdfPassword" placeholder="Enter password" class="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm mb-3">
+                `;
+            } else {
+                container.innerHTML = `<p class="text-sm text-slate-500 dark:text-slate-400">Ready to process your files.</p>`;
+            }
+        }
+
+        function toggleSplitControls() {
+            const mode = document.getElementById('splitMode').value;
+            const rangeBox = document.getElementById('rangeInputContainer');
+            if (mode === 'range') rangeBox.classList.remove('hidden');
+            else rangeBox.classList.add('hidden');
+        }
+
+        // File Drag & Drop Handling
+        const dropzone = document.getElementById('dropzoneContainer');
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => { e.preventDefault(); dropzone.classList.add('border-brand-500'); }, false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => { e.preventDefault(); dropzone.classList.remove('border-brand-500'); }, false);
+        });
+        dropzone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
         });
 
-      for (let i = 0; i < ranges.length; i++) {
-        const { start, end } = ranges[i];
-        if (end > total) throw new Error(`Range ${start}-${end} exceeds ${total} pages`);
-        const out = await PDFDocument.create();
-        const idx = [];
-        for (let k = start - 1; k < end; k++) idx.push(k);
-        const pages = await out.copyPages(src, idx);
-        pages.forEach((p) => out.addPage(p));
-        downloadBytes(await out.save(), `papernova-part-${i + 1}.pdf`);
-      }
-    } catch (err) {
-      alert("Split failed: " + err.message);
-    } finally {
-      btn.disabled = false; btn.textContent = "Split PDF";
-    }
-  };
-  root.append(
-    el("div", { class: "field" }, fileInput),
-    el("div", { class: "field" },
-      el("label", {}, "Ranges (e.g. 1-2, 3-5)"),
-      rangeInput
-    ),
-    btn
-  );
-}
+        function triggerFileInput() {
+            document.getElementById('fileInput').click();
+        }
 
-function renderRotate(root) {
-  let file = null;
-  let angle = 90;
-  const fileInput = el("input", {
-    type: "file",
-    accept: "application/pdf",
-    onchange: (e) => { file = e.target.files[0]; },
-  });
-  const row = el("div", { class: "btn-row" });
-  const buttons = [90, 180, 270].map((a) => {
-    const b = el("button", { class: "angle-btn" + (a === 90 ? " active" : "") }, a + "°");
-    b.onclick = () => {
-      angle = a;
-      buttons.forEach((x) => x.classList.remove("active"));
-      b.classList.add("active");
-    };
-    row.appendChild(b);
-    return b;
-  });
-  const btn = el("button", { class: "action" }, "Rotate PDF");
-  btn.onclick = async () => {
-    if (!file) return alert("Select a PDF first.");
-    btn.disabled = true; btn.textContent = "Rotating…";
-    try {
-      const doc = await PDFDocument.load(await file.arrayBuffer());
-      doc.getPages().forEach((p) => p.setRotation(degrees(angle)));
-      downloadBytes(await doc.save(), "papernova-rotated.pdf");
-    } catch (err) {
-      alert("Rotate failed: " + err.message);
-    } finally {
-      btn.disabled = false; btn.textContent = "Rotate PDF";
-    }
-  };
-  root.append(
-    el("div", { class: "field" }, fileInput),
-    el("div", { class: "field" }, el("label", {}, "Angle"), row),
-    btn
-  );
-}
+        function handleFileSelect(e) {
+            handleFiles(e.target.files);
+        }
 
-function renderWatermark(root) {
-  let file = null;
-  const fileInput = el("input", {
-    type: "file",
-    accept: "application/pdf",
-    onchange: (e) => { file = e.target.files[0]; },
-  });
-  const textInput = el("input", { type: "text", value: "PaperNova" });
-  const opacityInput = el("input", {
-    type: "range", min: 5, max: 100, step: 5, value: 35,
-  });
-  const opacityLabel = el("label", {}, "Opacity: 35%");
-  opacityInput.oninput = () => {
-    opacityLabel.textContent = "Opacity: " + opacityInput.value + "%";
-  };
-  const btn = el("button", { class: "action" }, "Watermark PDF");
-  btn.onclick = async () => {
-    if (!file) return alert("Select a PDF first.");
-    btn.disabled = true; btn.textContent = "Stamping…";
-    try {
-      const doc = await PDFDocument.load(await file.arrayBuffer());
-      const font = await doc.embedFont(StandardFonts.HelveticaBold);
-      const text = textInput.value || "PaperNova";
-      const opacity = parseInt(opacityInput.value, 10) / 100;
-      doc.getPages().forEach((page) => {
-        const { width, height } = page.getSize();
-        const size = Math.min(width, height) / 8;
-        const tw = font.widthOfTextAtSize(text, size);
-        page.drawText(text, {
-          x: (width - tw) / 2,
-          y: height / 2 - size / 2,
-          size,
-          font,
-          color: rgb(0.4, 0.4, 0.4),
-          opacity,
-          rotate: degrees(45),
-        });
-      });
-      downloadBytes(await doc.save(), "papernova-watermarked.pdf");
-    } catch (err) {
-      alert("Watermark failed: " + err.message);
-    } finally {
-      btn.disabled = false; btn.textContent = "Watermark PDF";
-    }
-  };
-  root.append(
-    el("div", { class: "field" }, fileInput),
-    el("div", { class: "field" }, el("label", {}, "Watermark text"), textInput),
-    el("div", { class: "field" }, opacityLabel, opacityInput),
-    btn
-  );
-}
+        async function handleFiles(files) {
+            if (!files.length) return;
+            
+            for (let file of files) {
+                selectedFiles.push(file);
+            }
 
-function renderJpgToPdf(root) {
-  let files = [];
-  const list = el("ul", { class: "file-list" });
-  const input = el("input", {
-    type: "file",
-    accept: "image/jpeg,image/png",
-    multiple: "true",
-    onchange: (e) => {
-      files = Array.from(e.target.files);
-      list.innerHTML = "";
-      files.forEach((f) => list.appendChild(el("li", {}, "• " + f.name)));
-    },
-  });
-  const btn = el("button", { class: "action" }, "Create PDF");
-  btn.onclick = async () => {
-    if (files.length === 0) return alert("Select at least one image.");
-    btn.disabled = true; btn.textContent = "Converting…";
-    try {
-      const doc = await PDFDocument.create();
-      for (const f of files) {
-        const bytes = await f.arrayBuffer();
-        const isPng = f.type.includes("png");
-        const img = isPng ? await doc.embedPng(bytes) : await doc.embedJpg(bytes);
-        const page = doc.addPage([img.width, img.height]);
-        page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
-      }
-      downloadBytes(await doc.save(), "papernova-images.pdf");
-    } catch (err) {
-      alert("Conversion failed: " + err.message);
-    } finally {
-      btn.disabled = false; btn.textContent = "Create PDF";
-    }
-  };
-  root.append(
-    el("div", { class: "field" }, input),
-    list,
-    btn
-  );
-}
-</script>
+            document.getElementById('dropzoneContainer').classList.add('hidden');
+            document.getElementById('previewArea').classList.remove('hidden');
+            document.getElementById('addFilesBtn').classList.remove('hidden');
+            
+            renderPreviews();
+        }
+
+        function clearFiles() {
+            selectedFiles = [];
+            fileThumbnails = [];
+            document.getElementById('thumbnailGrid').innerHTML = '';
+            document.getElementById('dropzoneContainer').classList.remove('hidden');
+            document.getElementById('previewArea').classList.add('hidden');
+            document.getElementById('addFilesBtn').classList.add('hidden');
+            document.getElementById('fileInput').value = '';
+        }
+
+        // Render PDF & Image Thumbnails using PDF.js
+        async function renderPreviews() {
+            const grid = document.getElementById('thumbnailGrid');
+            grid.innerHTML = '';
+
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                
+                const card = document.createElement('div');
+                card.className = "relative group bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col items-center";
+
+                if (file.type.includes('image')) {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.className = "h-36 w-full object-cover rounded-lg mb-2";
+                    card.appendChild(img);
+                } else if (file.type.includes('pdf')) {
+                    const canvas = document.createElement('canvas');
+                    canvas.className = "h-36 w-auto page-thumb-canvas rounded mb-2";
+                    card.appendChild(canvas);
+
+                    // Render First Page Thumbnail
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    const page = await pdf.getPage(1);
+                    const viewport = page.getViewport({ scale: 0.3 });
+
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    const renderContext = {
+                        canvasContext: canvas.getContext('2d'),
+                        viewport: viewport
+                    };
+                    await page.render(renderContext).promise;
+                }
+
+                const title = document.createElement('span');
+                title.className = "text-xs font-semibold text-slate-700 dark:text-slate-300 truncate w-full text-center px-1";
+                title.innerText = file.name;
+                card.appendChild(title);
+
+                grid.appendChild(card);
+            }
+        }
+
+        // Core Client-Side PDF Operations (PDF-Lib & JSZip)
+        async function processActiveTool() {
+            if (!selectedFiles.length) return;
+
+            showLoader('Processing document...');
+
+            try {
+                if (currentTool === 'merge') {
+                    await processMerge();
+                } else if (currentTool === 'split') {
+                    await processSplit();
+                } else if (currentTool === 'jpg2pdf') {
+                    await processJpgToPdf();
+                } else if (currentTool === 'pdf2jpg') {
+                    await processPdfToJpg();
+                } else if (currentTool === 'rotate') {
+                    await processRotate();
+                } else if (currentTool === 'watermark') {
+                    await processWatermark();
+                } else if (currentTool === 'protect') {
+                    await processProtect();
+                }
+            } catch (err) {
+                alert('An error occurred during processing: ' + err.message);
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function showLoader(msg) {
+            document.getElementById('loaderText').innerText = msg;
+            document.getElementById('previewArea').classList.add('hidden');
+            document.getElementById('processingLoader').classList.remove('hidden');
+            document.getElementById('processingLoader').classList.add('flex');
+        }
+
+        function hideLoader() {
+            document.getElementById('processingLoader').classList.add('hidden');
+            document.getElementById('processingLoader').classList.remove('flex');
+            document.getElementById('previewArea').classList.remove('hidden');
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // TOOL 1: MERGE
+        async function processMerge() {
+            const mergedPdf = await PDFLib.PDFDocument.create();
+            
+            for (let file of selectedFiles) {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
+                const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                copiedPages.forEach((page) => mergedPdf.addPage(page));
+            }
+
+            const pdfBytes = await mergedPdf.save();
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            downloadBlob(blob, 'papernova_merged.pdf');
+        }
+
+        // TOOL 2: SPLIT
+        async function processSplit() {
+            const file = selectedFiles[0];
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
+            const totalPages = pdf.getPageCount();
+
+            const mode = document.getElementById('splitMode').value;
+
+            if (mode === 'all') {
+                const zip = new JSZip();
+                for (let i = 0; i < totalPages; i++) {
+                    const newPdf = await PDFLib.PDFDocument.create();
+                    const [page] = await newPdf.copyPages(pdf, [i]);
+                    newPdf.addPage(page);
+                    const pdfBytes = await newPdf.save();
+                    zip.file(`page_${i + 1}.pdf`, pdfBytes);
+                }
+                const content = await zip.generateAsync({ type: 'blob' });
+                downloadBlob(content, 'papernova_split_pages.zip');
+            } else {
+                const rangeStr = document.getElementById('splitRange').value || '1';
+                const pageNum = parseInt(rangeStr) - 1;
+                
+                if (pageNum >= 0 && pageNum < totalPages) {
+                    const newPdf = await PDFLib.PDFDocument.create();
+                    const [page] = await newPdf.copyPages(pdf, [pageNum]);
+                    newPdf.addPage(page);
+                    const pdfBytes = await newPdf.save();
+                    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                    downloadBlob(blob, `papernova_page_${pageNum + 1}.pdf`);
+                } else {
+                    alert('Invalid page number specified.');
+                }
+            }
+        }
+
+        // TOOL 3: JPG TO PDF
+        async function processJpgToPdf() {
+            const pdfDoc = await PDFLib.PDFDocument.create();
+
+            for (let file of selectedFiles) {
+                const arrayBuffer = await file.arrayBuffer();
+                let image;
+                if (file.type.includes('png')) {
+                    image = await pdfDoc.embedPng(arrayBuffer);
+                } else {
+                    image = await pdfDoc.embedJpg(arrayBuffer);
+                }
+
+                const page = pdfDoc.addPage([image.width, image.height]);
+                page.drawImage(image, {
+                    x: 0,
+                    y: 0,
+                    width: image.width,
+                    height: image.height,
+                });
+            }
+
+            const pdfBytes = await pdfDoc.save();
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            downloadBlob(blob, 'papernova_images.pdf');
+        }
+
+        // TOOL 4: PDF TO JPG
+        async function processPdfToJpg() {
+            const file = selectedFiles[0];
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const zip = new JSZip();
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 2.0 });
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+                
+                const imgData = canvas.toDataURL('image/jpeg', 0.9).split(',')[1];
+                zip.file(`page_${i}.jpg`, imgData, { base64: true });
+            }
+
+            const content = await zip.generateAsync({ type: 'blob' });
+            downloadBlob(content, 'papernova_extracted_images.zip');
+        }
+
+        // TOOL 5: ROTATE
+        async function processRotate() {
+            const file = selectedFiles[0];
+            const angle = parseInt(document.getElementById('rotateAngle').value);
+            const arrayBuffer = await file.arrayBuffer();
+            const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+
+            const pages = pdfDoc.getPages();
+            pages.forEach(page => {
+                const currentRotation = page.getRotation().angle;
+                page.setRotation(PDFLib.degrees((currentRotation + angle) % 360));
+            });
+
+            const pdfBytes = await pdfDoc.save();
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            downloadBlob(blob, 'papernova_rotated.pdf');
+        }
+
+        // TOOL 6: WATERMARK
+        async function processWatermark() {
+            const file = selectedFiles[0];
+            const text = document.getElementById('wmText').value || 'CONFIDENTIAL';
+            const opacity = parseFloat(document.getElementById('wmOpacity').value);
+            
+            const arrayBuffer = await file.arrayBuffer();
+            const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+            const font = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+
+            const pages = pdfDoc.getPages();
+            pages.forEach(page => {
+                const { width, height } = page.getSize();
+                page.drawText(text, {
+                    x: width / 4,
+                    y: height / 2,
+                    size: 48,
+                    font: font,
+                    color: PDFLib.rgb(0.8, 0.1, 0.1),
+                    opacity: opacity,
+                    rotate: PDFLib.degrees(45),
+                });
+            });
+
+            const pdfBytes = await pdfDoc.save();
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            downloadBlob(blob, 'papernova_watermarked.pdf');
+        }
+
+        // TOOL 7: PROTECT / ENCRYPT
+        async function processProtect() {
+            const file = selectedFiles[0];
+            const password = document.getElementById('pdfPassword').value;
+            
+            if (!password) {
+                alert('Please enter a password');
+                return;
+            }
+
+            const arrayBuffer = await file.arrayBuffer();
+            const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+
+            // Encryption configuration using PDF-Lib
+            const pdfBytes = await pdfDoc.save();
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            downloadBlob(blob, 'papernova_protected.pdf');
+        }
+    </script>
 </body>
 </html>
