@@ -501,6 +501,7 @@
         function openTool(toolKey) {
             currentTool = toolKey;
             selectedFiles = [];
+            if (paperNovaDownloadUrl) { URL.revokeObjectURL(paperNovaDownloadUrl); paperNovaDownloadUrl = null; }
 
             const config = toolConfigs[toolKey] || { title: 'PDF Tool', desc: 'Process your document', accept: '*/*' };
 
@@ -676,18 +677,50 @@
             if (canvas && sigCtx) sigCtx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
+        let paperNovaDownloadUrl = null;
+
         function downloadBlob(blob, filename) {
             if (!blob) throw new Error('The output file could not be created.');
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            // Do not revoke immediately: some browsers need time to begin the download.
-            setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+            // Show a single explicit download link after processing. This avoids
+            // browsers blocking an automatic download after lengthy async work.
+            if (paperNovaDownloadUrl) {
+                URL.revokeObjectURL(paperNovaDownloadUrl);
+                paperNovaDownloadUrl = null;
+            }
+
+            paperNovaDownloadUrl = URL.createObjectURL(blob);
+            let panel = document.getElementById('downloadResult');
+            if (!panel) {
+                panel = document.createElement('div');
+                panel.id = 'downloadResult';
+                panel.className = 'mt-6 p-5 rounded-2xl border border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800 text-center';
+                const workspace = document.getElementById('workspaceView');
+                const progress = document.getElementById('processingProgress');
+                if (progress && progress.parentNode) {
+                    progress.parentNode.insertBefore(panel, progress.nextSibling);
+                } else if (workspace) {
+                    workspace.appendChild(panel);
+                } else {
+                    document.body.appendChild(panel);
+                }
+            }
+
+            panel.innerHTML = '';
+            const message = document.createElement('p');
+            message.className = 'font-bold text-emerald-800 dark:text-emerald-300 mb-3';
+            message.textContent = 'Your file is ready. Click below to download it.';
+            const link = document.createElement('a');
+            link.href = paperNovaDownloadUrl;
+            link.download = filename;
+            link.className = 'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg transition';
+            const icon = document.createElement('i');
+            icon.className = 'fa-solid fa-download';
+            link.appendChild(icon);
+            link.appendChild(document.createTextNode(' Download ' + filename));
+            panel.appendChild(message);
+            panel.appendChild(link);
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         function safeBaseName(file) {
