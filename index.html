@@ -44,6 +44,10 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <!-- docx.js for exporting Word files -->
     <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+    <!-- ZIP downloads for tools that produce multiple files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- HTML rendering to PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         ::-webkit-scrollbar {
@@ -640,9 +644,31 @@
             sigCtx.lineWidth = 2;
             sigCtx.strokeStyle = '#000000';
 
-            canvas.onmousedown = (e) => { sigDrawing = true; sigCtx.beginPath(); sigCtx.moveTo(e.offsetX, e.offsetY); };
-            canvas.onmousemove = (e) => { if (sigDrawing) { sigCtx.lineTo(e.offsetX, e.offsetY); sigCtx.stroke(); } };
-            canvas.onmouseup = () => { sigDrawing = false; };
+            canvas.style.touchAction = 'none';
+            const point = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    x: (e.clientX - rect.left) * (canvas.width / rect.width),
+                    y: (e.clientY - rect.top) * (canvas.height / rect.height)
+                };
+            };
+            canvas.onpointerdown = (e) => {
+                sigDrawing = true;
+                canvas.setPointerCapture?.(e.pointerId);
+                const p = point(e);
+                sigCtx.beginPath();
+                sigCtx.moveTo(p.x, p.y);
+            };
+            canvas.onpointermove = (e) => {
+                if (!sigDrawing) return;
+                const p = point(e);
+                sigCtx.lineTo(p.x, p.y);
+                sigCtx.stroke();
+            };
+            const stopDrawing = () => { sigDrawing = false; };
+            canvas.onpointerup = stopDrawing;
+            canvas.onpointercancel = stopDrawing;
+            canvas.onpointerleave = (e) => { if (e.buttons === 0) stopDrawing(); };
         }
 
         function clearSig() {
@@ -651,14 +677,27 @@
         }
 
         function downloadBlob(blob, filename) {
+            if (!blob) throw new Error('The output file could not be created.');
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = filename;
+            a.style.display = 'none';
             document.body.appendChild(a);
             a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            a.remove();
+            // Do not revoke immediately: some browsers need time to begin the download.
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+        }
+
+        function safeBaseName(file) {
+            return (file?.name || 'papernova_document').replace(/\.[^/.]+$/, '').replace(/[\\/:*?"<>|]+/g, '_');
+        }
+
+        function canvasToBlob(canvas, type = 'image/jpeg', quality = 0.92) {
+            return new Promise((resolve, reject) => {
+                canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Could not create image output.')), type, quality);
+            });
         }
 
         function downloadAppShortcut(storeName, targetUrl) {
@@ -685,34 +724,51 @@
 
         // Processing Logic for All Tools
         async function processActiveTool() {
-            if (selectedFiles.length === 0 && currentTool !== 'html2pdf') return;
+            if (selectedFiles.length === 0 && currentTool !== 'html2pdf') {
+                alert('Please select a file first.');
+                return;
+            }
+            if (['merge'].includes(currentTool) && selectedFiles.length < 2) {
+                alert('Please select at least two PDF files to merge.');
+                return;
+            }
+            if (['split','compress','pdf2word','pdf2jpg','sign','watermark','rotate','ocr','pagenumbers'].includes(currentTool) &&
+                selectedFiles[0] && selectedFiles[0].type && selectedFiles[0].type !== 'application/pdf' &&
+                !selectedFiles[0].name.toLowerCase().endsWith('.pdf') && currentTool !== 'ocr') {
+                alert('Please select a PDF file for this tool.');
+                return;
+            }
 
             setProcessing(true, 'Reading input document...');
 
             try {
                 // 1. PDF TO JPG / IMAGES
                 if (currentTool === 'pdf2jpg') {
+                    if (!window.JSZip) throw new Error('The ZIP library did not load. Refresh the page and try again.');
                     setProcessing(true, 'Rendering PDF pages to JPG images...');
                     const pdfData = await selectedFiles[0].arrayBuffer();
                     const pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise;
+                    const zip = new JSZip();
+                    const baseName = safeBaseName(selectedFiles[0]);
 
                     for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-                        setProcessing(true, `Rendering Page ${pageNum} of ${pdfDoc.numPages}...`);
+                        setProcessing(true, `Rendering page ${pageNum} of ${pdfDoc.numPages}...`);
                         const page = await pdfDoc.getPage(pageNum);
-                        const viewport = page.getViewport({ scale: 2.0 });
-
+                        const viewport = page.getViewport({ scale: 2 });
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
-                        canvas.height = viewport.height;
-                        canvas.width = viewport.width;
-
-                        await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-
-                        canvas.toBlob((blob) => {
-                            const baseName = selectedFiles[0].name.replace(/\.[^/.]+$/, "");
-                            downloadBlob(blob, `${baseName}_page_${pageNum}.jpg`);
-                        }, 'image/jpeg', 0.92);
+                        canvas.width = Math.ceil(viewport.width);
+                        canvas.height = Math.ceil(viewport.height);
+                        await page.render({ canvasContext: ctx, viewport }).promise;
+                        const blob = await canvasToBlob(canvas, 'image/jpeg', 0.92);
+                        zip.file(`${baseName}_page_${pageNum}.jpg`, blob);
+                        canvas.width = 0;
+                        canvas.height = 0;
                     }
+
+                    setProcessing(true, 'Preparing image download...');
+                    const zipBlob = await zip.generateAsync({ type: 'blob' });
+                    downloadBlob(zipBlob, `${baseName}_jpg_pages.zip`);
                 }
 
                 // 2. JPG TO PDF
@@ -754,51 +810,62 @@
 
                 // 4. SPLIT PDF
                 else if (currentTool === 'split') {
-                    setProcessing(true, 'Splitting PDF pages into individual documents...');
+                    if (!window.JSZip) throw new Error('The ZIP library did not load. Refresh the page and try again.');
+                    setProcessing(true, 'Splitting PDF pages...');
                     const pdfBytes = await selectedFiles[0].arrayBuffer();
                     const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
                     const pageCount = pdfDoc.getPageCount();
+                    const zip = new JSZip();
+                    const baseName = safeBaseName(selectedFiles[0]);
 
                     for (let i = 0; i < pageCount; i++) {
+                        setProcessing(true, `Preparing page ${i + 1} of ${pageCount}...`);
                         const newPdf = await PDFLib.PDFDocument.create();
                         const [copiedPage] = await newPdf.copyPages(pdfDoc, [i]);
                         newPdf.addPage(copiedPage);
-
                         const newBytes = await newPdf.save();
-                        const baseName = selectedFiles[0].name.replace(/\.[^/.]+$/, "");
-                        downloadBlob(new Blob([newBytes], { type: 'application/pdf' }), `${baseName}_page_${i + 1}.pdf`);
+                        zip.file(`${baseName}_page_${i + 1}.pdf`, newBytes);
                     }
+
+                    setProcessing(true, 'Preparing split PDF download...');
+                    downloadBlob(await zip.generateAsync({ type: 'blob' }), `${baseName}_split_pages.zip`);
                 }
 
                 // 5. PDF TO WORD (.DOCX)
                 else if (currentTool === 'pdf2word') {
-                    setProcessing(true, 'Extracting text and structure into Word document...');
+                    if (!window.docx) throw new Error('The Word document library did not load. Refresh the page and try again.');
+                    setProcessing(true, 'Extracting text from PDF...');
                     const pdfData = await selectedFiles[0].arrayBuffer();
                     const pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise;
-
-                    let fullTextLines = [];
+                    const paragraphs = [];
 
                     for (let i = 1; i <= pdfDoc.numPages; i++) {
                         setProcessing(true, `Extracting text from page ${i} of ${pdfDoc.numPages}...`);
                         const page = await pdfDoc.getPage(i);
                         const textContent = await page.getTextContent();
-                        const pageText = textContent.items.map(item => item.str).join(' ');
-                        fullTextLines.push(`--- Page ${i} ---`);
-                        fullTextLines.push(pageText);
+                        let lastY = null;
+                        let line = '';
+
+                        for (const item of textContent.items) {
+                            if (!item.str || !item.str.trim()) continue;
+                            const y = item.transform ? item.transform[5] : null;
+                            if (lastY !== null && y !== null && Math.abs(y - lastY) > 3) {
+                                if (line.trim()) paragraphs.push(new docx.Paragraph({ children: [new docx.TextRun(line.trim())] }));
+                                line = '';
+                            } else if (line && !line.endsWith(' ')) {
+                                line += ' ';
+                            }
+                            line += item.str;
+                            lastY = y;
+                        }
+                        if (line.trim()) paragraphs.push(new docx.Paragraph({ children: [new docx.TextRun(line.trim())] }));
+                        if (i < pdfDoc.numPages) paragraphs.push(new docx.Paragraph({ children: [new docx.TextRun('')], pageBreakBefore: true }));
                     }
 
-                    const doc = new docx.Document({
-                        sections: [{
-                            properties: {},
-                            children: fullTextLines.map(line => new docx.Paragraph({
-                                children: [new docx.TextRun(line)]
-                            }))
-                        }]
-                    });
-
-                    const blob = await docx.Packer.toBlob(doc);
-                    const baseName = selectedFiles[0].name.replace(/\.[^/.]+$/, "");
-                    downloadBlob(blob, `${baseName}_converted.docx`);
+                    if (!paragraphs.length) throw new Error('No selectable text was found. This PDF may be scanned; use the OCR tool first.');
+                    const wordDoc = new docx.Document({ sections: [{ properties: {}, children: paragraphs }] });
+                    const blob = await docx.Packer.toBlob(wordDoc);
+                    downloadBlob(blob, `${safeBaseName(selectedFiles[0])}_converted.docx`);
                 }
 
                 // 6. SIGN PDF
@@ -807,6 +874,12 @@
                     const canvas = document.getElementById('sigCanvas');
                     if (!canvas) throw new Error("Signature canvas empty");
                     
+                    const pixelData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+                    let hasSignature = false;
+                    for (let i = 3; i < pixelData.length; i += 4) {
+                        if (pixelData[i] > 0) { hasSignature = true; break; }
+                    }
+                    if (!hasSignature) throw new Error('Please draw your signature on the canvas first.');
                     const sigImgUrl = canvas.toDataURL('image/png');
                     const pdfDoc = await PDFLib.PDFDocument.load(await selectedFiles[0].arrayBuffer());
                     const img = await pdfDoc.embedPng(sigImgUrl);
@@ -814,7 +887,7 @@
                     firstPage.drawImage(img, { x: 50, y: 50, width: 180, height: 75 });
 
                     const pdfBytes = await pdfDoc.save();
-                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), 'signed_document.pdf');
+                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), `${safeBaseName(selectedFiles[0])}_signed.pdf`);
                 }
 
                 // 7. WATERMARK PDF
@@ -830,13 +903,13 @@
                             x: width / 4,
                             y: height / 2,
                             size: 42,
-                            opacity: 0.35,
+                            color: PDFLib.rgb(0.78, 0.78, 0.82),
                             rotate: PDFLib.degrees(45)
                         });
                     });
 
                     const pdfBytes = await pdfDoc.save();
-                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), 'watermarked_document.pdf');
+                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), `${safeBaseName(selectedFiles[0])}_watermarked.pdf`);
                 }
 
                 // 8. ROTATE PDF
@@ -852,23 +925,51 @@
                     });
 
                     const pdfBytes = await pdfDoc.save();
-                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), 'rotated_document.pdf');
+                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), `${safeBaseName(selectedFiles[0])}_rotated.pdf`);
                 }
 
                 // 9. OCR AI SCAN TO TEXT
                 else if (currentTool === 'ocr') {
-                    setProcessing(true, 'Running Optical Character Recognition AI...');
-                    const result = await Tesseract.recognize(selectedFiles[0], 'eng', {
-                        logger: m => {
-                            if (m.status === 'recognizing text') {
-                                setProcessing(true, `OCR Progress: ${Math.round(m.progress * 100)}%`);
-                            }
-                        }
-                    });
+                    if (!window.Tesseract) throw new Error('The OCR library did not load. Refresh the page and try again.');
+                    const file = selectedFiles[0];
+                    let extractedText = '';
 
-                    const textBlob = new Blob([result.data.text], { type: 'text/plain;charset=utf-8' });
-                    const baseName = selectedFiles[0].name.replace(/\.[^/.]+$/, "");
-                    downloadBlob(textBlob, `${baseName}_extracted_ocr.txt`);
+                    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                        setProcessing(true, 'Opening PDF for OCR...');
+                        const pdfDoc = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+                        for (let i = 1; i <= pdfDoc.numPages; i++) {
+                            setProcessing(true, `Rendering page ${i} of ${pdfDoc.numPages} for OCR...`);
+                            const page = await pdfDoc.getPage(i);
+                            const viewport = page.getViewport({ scale: 1.8 });
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            canvas.width = Math.ceil(viewport.width);
+                            canvas.height = Math.ceil(viewport.height);
+                            await page.render({ canvasContext: ctx, viewport }).promise;
+                            setProcessing(true, `Recognizing text on page ${i} of ${pdfDoc.numPages}...`);
+                            const result = await Tesseract.recognize(canvas, 'eng', {
+                                logger: m => {
+                                    if (m.status === 'recognizing text') {
+                                        setProcessing(true, `OCR page ${i}: ${Math.round(m.progress * 100)}%`);
+                                    }
+                                }
+                            });
+                            extractedText += `\n--- Page ${i} ---\n${result.data.text || ''}\n`;
+                            canvas.width = 0;
+                            canvas.height = 0;
+                        }
+                    } else {
+                        setProcessing(true, 'Recognizing text in image...');
+                        const result = await Tesseract.recognize(file, 'eng', {
+                            logger: m => {
+                                if (m.status === 'recognizing text') setProcessing(true, `OCR Progress: ${Math.round(m.progress * 100)}%`);
+                            }
+                        });
+                        extractedText = result.data.text || '';
+                    }
+
+                    if (!extractedText.trim()) throw new Error('No text was detected in this file.');
+                    downloadBlob(new Blob([extractedText], { type: 'text/plain;charset=utf-8' }), `${safeBaseName(file)}_extracted_ocr.txt`);
                 }
 
                 // 10. PAGE NUMBERS
@@ -889,27 +990,36 @@
                     });
 
                     const pdfBytes = await pdfDoc.save();
-                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), 'numbered_document.pdf');
+                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), `${safeBaseName(selectedFiles[0])}_numbered.pdf`);
                 }
 
                 // 11. HTML TO PDF
                 else if (currentTool === 'html2pdf') {
-                    setProcessing(true, 'Generating PDF from HTML content...');
-                    const htmlCode = document.getElementById('htmlInput')?.value || '<h1>PaperNova Document</h1>';
-                    
-                    const pdfDoc = await PDFLib.PDFDocument.create();
-                    const page = pdfDoc.addPage([595.28, 841.89]); // A4 Size
-                    
-                    const cleanText = htmlCode.replace(/<[^>]*>?/gm, ' ');
-                    page.drawText(cleanText.substring(0, 1500), {
-                        x: 40,
-                        y: 800,
-                        size: 12,
-                        lineHeight: 16
-                    });
+                    if (!window.html2pdf) throw new Error('The HTML-to-PDF library did not load. Refresh the page and try again.');
+                    const htmlCode = document.getElementById('htmlInput')?.value.trim();
+                    if (!htmlCode) throw new Error('Paste some HTML content before processing.');
 
-                    const pdfBytes = await pdfDoc.save();
-                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), 'html_converted.pdf');
+                    setProcessing(true, 'Rendering HTML into a PDF...');
+                    const page = document.createElement('div');
+                    page.style.cssText = 'box-sizing:border-box;width:750px;padding:32px;background:#ffffff;color:#111827;font-family:Arial,sans-serif;overflow-wrap:anywhere;';
+                    page.innerHTML = htmlCode;
+                    document.body.appendChild(page);
+
+                    try {
+                        await html2pdf().set({
+                            margin: 10,
+                            filename: 'html_converted.pdf',
+                            image: { type: 'jpeg', quality: 0.95 },
+                            html2canvas: { scale: 1.5, useCORS: true, backgroundColor: '#ffffff' },
+                            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                            pagebreak: { mode: ['css', 'legacy'] }
+                        }).from(page).toPdf().get('pdf').then(pdf => {
+                            const blob = pdf.output('blob');
+                            downloadBlob(blob, 'html_converted.pdf');
+                        });
+                    } finally {
+                        page.remove();
+                    }
                 }
 
                 // 12. COMPRESS PDF
@@ -917,7 +1027,7 @@
                     setProcessing(true, 'Optimizing PDF structure and stream objects...');
                     const pdfDoc = await PDFLib.PDFDocument.load(await selectedFiles[0].arrayBuffer());
                     const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
-                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), 'compressed_document.pdf');
+                    downloadBlob(new Blob([pdfBytes], { type: 'application/pdf' }), `${safeBaseName(selectedFiles[0])}_optimized.pdf`);
                 }
 
             } catch (err) {
